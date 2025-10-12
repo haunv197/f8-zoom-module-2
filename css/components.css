@@ -345,6 +345,10 @@
   overflow: hidden;
 }
 
+.artist-hero.hide {
+  display: none;
+}
+
 .hero-background {
   position: absolute;
   top: 0;
@@ -411,6 +415,10 @@
   margin-bottom: var(--spacing-2xl);
 }
 
+.artist-controls.hide {
+  display: none;
+}
+
 .play-btn-large {
   width: 56px;
   height: 56px;
@@ -436,6 +444,10 @@
 /* Track List */
 .popular-section {
   margin-bottom: var(--spacing-2xl);
+}
+
+.popular-section.hide {
+  display: none;
 }
 
 .section-title {
@@ -967,6 +979,11 @@
   margin-bottom: var(--spacing-2xl);
 }
 
+.hits-section.hide,
+.artists-section.hide {
+  display: none;
+}
+
 .section-header {
   display: flex;
   align-items: center;
@@ -1100,4 +1117,45 @@
   overflow: hidden;
   text-overflow: ellipsis;
   font-weight: 400;
+}
+
+.toast-message {
+  position: fixed;
+  right: 0;
+  top: 12%;
+  background: #fff;
+  color: #000;
+  z-index: var(--z-toast);
+  padding: 0.75rem 1rem;
+  width: 300px;
+  border-left: 6px solid #24ba24;
+  transform: translateX(100%);
+  transition: 0.3s;
+}
+.toast-message.show {
+  transform: translateX(0);
+}
+
+.toast-message-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.toast-message-icon {
+  color: #24ba24;
+  font-size: 23px;
+}
+
+.toast-message-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.toast-message-title {
+  font-weight: bold;
+  color: #333;
+}
+.toast-message-detail {
+  color: #6e6d6d;
 }

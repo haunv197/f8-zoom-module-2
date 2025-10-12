@@ -53,6 +53,7 @@ class HttpRequest {
 
       return response;
     } catch (error) {
+      console.error('error', error)
       throw error;
     }
   }

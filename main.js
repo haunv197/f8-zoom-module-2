@@ -7,6 +7,93 @@ function escapeHTML(str) {
     return div.innerHTML;
 }
 
+// formatNumber
+function formatNumberComma(number) {
+    let newNumber = number;
+    if (!newNumber || newNumber < 1000) {
+        return newNumber ?? 0;
+    }
+    const numbers = [];
+    while (newNumber > 1000) {
+        numbers.unshift(Math.floor(number % 1000))
+        newNumber = newNumber / 1000;
+    }
+    numbers.unshift(Math.floor(newNumber))
+    newNumber = numbers.join(",")
+    return newNumber;
+}
+
+function formatTimeBySecond(timer) {
+    if (!timer || timer < 60) {
+        return timer ?? '0'
+    }
+
+    let newTimer = [];
+    let hour = 0;
+    let minute = Math.floor(timer / 60);
+    let second = Math.floor(timer % 60);
+
+    if (minute >= 60) {
+        hour = Math.floor(minute / 60);
+        minute = Math.floor(minute % 60)
+        newTimer.push(hour)
+    }
+
+    const newSecond = second >= 10 ? second : ('0' + second);
+    newTimer.push(minute)
+    newTimer.push(newSecond)
+    return newTimer.join(":")
+}
+
+
+function closeModal() {
+    const authModal = document.getElementById("authModal");
+    authModal.classList.remove("show");
+    document.body.style.overflow = "auto"; // Restore scrolling
+}
+
+
+function logout() {
+    const mainHeader = document.querySelector(".main-header");
+    const userMenu = mainHeader.querySelector(".user-menu");
+    const authorButtons = mainHeader.querySelector(".auth-buttons");
+
+    userMenu.classList.remove("show");
+    authorButtons.classList.add("show");
+
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("userCurrent");
+    return;
+}
+
+function loginAndRegisterSuccess(user, message) {
+    const mainHeader = document.querySelector(".main-header");
+    const userMenu = mainHeader.querySelector(".user-menu");
+    const userAvatarImg = mainHeader.querySelector(".user-avatar img");
+
+    // remove author (login, register)
+    const authorButtons = mainHeader.querySelector(".auth-buttons");
+    authorButtons.classList.remove("show");
+
+    // show user
+    userMenu.classList.add("show");
+    if (user.avatar_url) {
+        userAvatarImg.src = user.avatar_url;
+    }
+
+    // Show Toast
+    if (message) {
+        showToast(message);
+    }
+}
+
+function loginSuccess(user) {
+    loginAndRegisterSuccess(user)
+    return;
+}
+
+
 // Auth Modal Functionality
 document.addEventListener("DOMContentLoaded", function () {
     // Get DOM elements
@@ -116,21 +203,14 @@ document.addEventListener("DOMContentLoaded", function () {
     logoutBtn.addEventListener("click", function () {
         // Close dropdown first
         userDropdown.classList.remove("show");
-
+        logout();
         console.log("Logout clicked");
         // TODO: Students will implement logout logic here
     });
 });
 
-// Other functionality
-document.addEventListener("DOMContentLoaded", async function () {
-    // TODO: Implement other functionality here
-    const artists = await httpRequest.get("artists")
-    console.log('artists', artists)
-});
-
 // Register Functionality
-document.addEventListener("DOMContentLoaded", function () {
+function register() {
     const signupForm = document.querySelector("#signupForm");
     const signupEmail = document.querySelector("#signupEmail");
     const signupPassword = document.querySelector("#signupPassword");
@@ -143,20 +223,23 @@ document.addEventListener("DOMContentLoaded", function () {
         .querySelector(".auth-form-content")
         .addEventListener("submit", async function (e) {
             e.preventDefault();
-            formGroupEmail.classList.remove("invalid")
+            // formGroupEmail.classList.remove("invalid")
             formGroupPassword.classList.remove("invalid")
 
             const credentials = {
                 email: signupEmail.value,
                 password: signupPassword.value,
             }
+
             try {
-                const { user, access_token } = await httpRequest.post(
+                const { user, access_token, refresh_token } = await httpRequest.post(
                     "auth/register",
                     credentials
                 )
                 localStorage.setItem("access_token", access_token)
-                localStorage.setItem("userCurrent", user)
+                localStorage.setItem("refresh_token", refresh_token)
+                localStorage.setItem("userCurrent", JSON.stringify(user))
+                loginAndRegisterSuccess(user, "Đăng kí thành công");
 
             } catch (err) {
                 const { error } = err.response;
@@ -178,6 +261,391 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             }
         })
+}
+
+// Login Functionality
+function login() {
+    const loginForm = document.querySelector("#loginForm");
+    const loginEmail = document.querySelector("#loginEmail");
+    const loginPassword = document.querySelector("#loginPassword");
+    const formGroupEmail = loginForm.querySelector(".form-group-email");
+    const formGroupPassword = loginForm.querySelector(".form-group-password");
+    const validEmail = loginForm.querySelector(".valid-email");
+    const validPassword = loginForm.querySelector(".valid-password");
+
+
+    loginForm
+        .querySelector(".auth-form-content")
+        .addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            formGroupEmail.classList.remove("invalid");
+            formGroupPassword.classList.remove("invalid");
+
+            const credentials = {
+                "email": loginEmail.value,
+                "password": loginPassword.value,
+            };
+
+            try {
+                const { access_token, user, refresh_token } = await httpRequest.post("auth/login", credentials);
+                localStorage.setItem("access_token", access_token);
+                localStorage.setItem("refresh_token", refresh_token);
+                localStorage.setItem("userCurrent", JSON.stringify(user));
+
+                loginAndRegisterSuccess(user, "Đăng nhập thành công")
+                closeModal();
+
+            } catch (err) {
+                const { error } = err.response
+                switch (error.code) {
+                    case 'INVALID_CREDENTIALS':
+                        formGroupEmail.classList.add("invalid");
+                        formGroupPassword.classList.add("invalid");
+                        validEmail.textContent = error.message
+                        validPassword.textContent = error.message
+                        break;
+                    case 'VALIDATION_ERROR':
+                        error?.details.forEach(detail => {
+                            if (detail.field === 'email') {
+                                formGroupEmail.classList.add("invalid");
+                                validEmail.textContent = detail.message
+                            } else {
+                                formGroupPassword.classList.add("invalid");
+                                validPassword.textContent = detail.message
+                            }
+                        });
+                        break;
+                }
+            }
+
+        })
+}
+
+function hideHitsAndArtists() {
+    const hitsSection = document.querySelector("#hitsSection");
+    const artistsSection = document.querySelector("#artistsSection");
+
+    hitsSection.classList.add("hide");
+    artistsSection.classList.add("hide");
+    return;
+}
+
+// Show Detail PlayList
+function showAllTracksById(artistHeroData, tracksData) {
+    const artistHero = document.querySelector("#artistHero");
+    const artistControls = document.querySelector("#artistControls");
+    const artistPopular = document.querySelector("#artistPopular");
+    const trackList = artistPopular.querySelector(".track-list");
+
+    hideHitsAndArtists();
+    artistHero.classList.remove("hide");
+    artistControls.classList.remove("hide");
+    artistPopular.classList.remove("hide");
+
+    if (artistHeroData) {
+        const {
+            name,
+            imageUrl,
+            monthlyListeners,
+            isVerified,
+        } = artistHeroData;
+
+        artistHero.innerHTML = ` 
+        <div class="hero-background">
+            <img src="${imageUrl}" alt="${name}" class="hero-image">
+            <div class="hero-overlay"></div>
+        </div>
+        <div class="hero-content">
+            <div class="verified-badge">
+            <i class="fas fa-check-circle"></i>
+            <span>Verified Artist</span>
+            </div>
+            <h1 class="artist-name">${name}</h1>
+            <p class="monthly-listeners">
+                ${monthlyListeners} monthly listeners
+            </p>
+        </div>`;
+    }
+
+
+    if (tracksData?.length) {
+        trackList.innerHTML = tracksData.map(track => {
+            const {
+                position,
+                imageUrl,
+                title,
+                playCount,
+                duration,
+            } = track;
+            return (
+                `<div class="track-item">
+              <div class="track-number">${position}</div>
+              <div class="track-image">
+                <img src="${imageUrl}?height=40&amp;width=40" alt="${title}">
+              </div>
+              <div class="track-info">
+                <div class="track-name">
+                  ${title}
+                </div>
+              </div>
+              <div class="track-plays">${playCount}</div>
+              <div class="track-duration">${duration}</div>
+              <button class="track-menu-btn">
+                <i class="fas fa-ellipsis-h"></i>
+              </button>
+            </div>`
+            );
+        }).join("");
+    } else {
+        trackList.innerHTML = '';
+    }
+
+    return;
+}
+
+function handleShowDetailPlayList() {
+    const hitsSection = document.querySelector("#hitsSection");
+    hitsSection.querySelectorAll(".hit-card")
+        .forEach(hit => {
+            hit.addEventListener("click", async function () {
+                const id = this.getAttribute("data-id");
+
+                const newUrl = `${location.pathname}?idPlayList=${id}`;
+                history.replaceState({}, '', newUrl);
+
+                const search = new URLSearchParams(window.location.search).get("idPlayList");
+                console.log('search', search)
+                console.log('location', location)
+
+
+                const playlistDetail = await getPlaylistByID(id)
+                const { tracks } = await getAllTracksByIdPlaylist(id)
+                console.log('playlistDetail', playlistDetail)
+                console.log('tracks', tracks)
+
+                if (playlistDetail) {
+                    const artistHeroData = {
+                        name: playlistDetail.name,
+                        imageUrl: playlistDetail.image_url,
+                        monthlyListeners: formatNumberComma(playlistDetail.monthly_listeners) ?? '',
+                        isVerified: playlistDetail.is_verified ?? false,
+                    }
+                    const tracksData = tracks && tracks.map(track => ({
+                        position: track.position,
+                        imageUrl: track.artist_image_url,
+                        title: track.track_title,
+                        playCount: formatNumberComma(track.track_play_count),
+                        duration: formatTimeBySecond(track.track_duration)
+                    }));
+                    showAllTracksById(artistHeroData, tracksData);
+                }
+            });
+        });
+    return;
+}
+
+// Show Detail Artist
+function handleShowDetailArtist() {
+    const artistsSection = document.querySelector("#artistsSection");
+    const artistsGrid = artistsSection.querySelector('.artists-grid');
+
+    artistsGrid.querySelectorAll(".artist-card")
+        .forEach(artist => {
+            artist.addEventListener("click", async function () {
+                const id = artist.getAttribute("data-id");
+                const artistDetail = await getArtistByID(id)
+                const { tracks } = await getAllTracksByIdArtist(id)
+
+                console.log('artistDetail', artistDetail)
+                console.log('tracks', tracks)
+                if (artistDetail) {
+                    const artistHeroData = {
+                        name: artistDetail.name,
+                        imageUrl: artistDetail.image_url,
+                        monthlyListeners: formatNumberComma(artistDetail.monthly_listeners),
+                        isVerified: artistDetail.is_verified,
+                    }
+                    const tracksData = tracks && tracks.map(track => ({
+                        position: track.track_number,
+                        imageUrl: track.image_url,
+                        title: track.title,
+                        playCount: formatNumberComma(track.track_play_count),
+                        duration: formatTimeBySecond(track.duration)
+                    }));
+                    showAllTracksById(artistHeroData, tracksData);
+                }
+            })
+        })
+    return;
+}
+
+function showToast(message) {
+    if (!message) {
+        return;
+    }
+    const toastMessage = document.querySelector("#toastMessage")
+    const toastMessageDetail = toastMessage.querySelector(".toast-message-detail")
+    toastMessage.classList.add("show")
+    toastMessageDetail.textContent = message;
+
+    setTimeout(() => {
+        toastMessage.classList.remove("show")
+    }, 2000);
+    return;
+}
+
+// Back to Home
+function handleBackToHome() {
+    const btnBackToHome = document.querySelectorAll(".js-back-home");
+    btnBackToHome.forEach(btn => {
+        btn.addEventListener("click", function () {
+            const { origin, pathname } = location;
+            const url = `${origin}${pathname}`
+            location.assign(url);
+        })
+    })
+    return;
+}
+
+
+// Load Get “Today’s biggest hits”:
+async function getPlaylists() {
+    const hitsSection = document.querySelector("#hitsSection");
+    const hitsGrid = hitsSection.querySelector(".hits-grid");
+    try {
+        const { playlists } = await httpRequest.get('playlists?limit=20&offset=0');
+        console.log('playlists', playlists)
+        if (playlists?.length) {
+            hitsGrid.innerHTML = playlists.map(playlist => {
+                const { id, image_url, name, user_display_name } = playlist
+                return `
+                    <div class="hit-card" data-id=${id}>
+                        <div class="hit-card-cover">
+                            <img src=${image_url} alt=${name} />
+                            <button class="hit-play-btn">
+                            <i class="fas fa-play"></i>
+                            </button>
+                        </div>
+                        <div class="hit-card-info">
+                            <h3 class="hit-card-title">${name}</h3>
+                            <p class="hit-card-artist">${user_display_name}</p>
+                        </div>
+                        </div>
+                `;
+            }).join("");
+
+            handleShowDetailPlayList();
+
+        }
+    } catch (err) {
+        console.log('Error - Get Today’s biggest hits: ', err)
+    }
+    return;
+}
+
+// Load Get Data “Popular artists”:
+async function getArtists() {
+    const artistsSection = document.querySelector("#artistsSection");
+    const artistsGrid = artistsSection.querySelector(".artists-grid");
+    try {
+        const { artists } = await httpRequest.get("artists?limit=20&offset=0");
+        console.log('artists', artists)
+        if (artists?.length) {
+            artistsGrid.innerHTML = artists.map(artist => {
+                const { id, image_url, name, } = artist;
+                return (
+                    `<div class="artist-card" data-id=${id}>
+                        <div class="artist-card-cover">
+                            <img src=${image_url} alt=${name} />
+                            <button class="artist-play-btn">
+                            <i class="fas fa-play"></i>
+                            </button>
+                        </div>
+                        <div class="artist-card-info">
+                            <h3 class="artist-card-name">${name}</h3>
+                            <p class="artist-card-type">Artist</p>
+                        </div>
+                    </div>`
+                );
+            }).join("");
+
+            handleShowDetailArtist();
+        }
+    } catch (err) {
+        console.log("Error - Get Data Popular artists", err)
+    }
+}
+
+//Artist: API Artists/Get Artist by ID
+async function getArtistByID(id) {
+    if (!id) {
+        return null;
+    }
+    try {
+        const response = await httpRequest.get(`artists/${id}`);
+        return response;
+    } catch (err) {
+        console.error('Get Artist by ID: ', err)
+        return null;
+    }
+}
+
+// Playlist: GET API Playlists/Get Playlist by ID
+async function getPlaylistByID(id) {
+    if (!id) {
+        return null;
+    }
+    try {
+        const response = await httpRequest.get(`playlists/${id}`);
+        return response;
+
+    } catch (err) {
+        console.error('Error - GET API Playlists/Get Playlist by ID', err)
+        return null;
+    }
+}
+
+// Get All Tracks by Id (Playlists)
+async function getAllTracksByIdPlaylist(id) {
+    if (!id) {
+        return null;
+    }
+    try {
+        return await httpRequest.get(`playlists/${id}/tracks`);
+
+    } catch (err) {
+        console.error('Error - Get All Tracks by Id (Playlists)', err)
+        return null;
+    }
+}
+
+// Get All Tracks by Id (Artists)
+async function getAllTracksByIdArtist(id) {
+    if (!id) {
+        return null;
+    }
+    try {
+        return await httpRequest.get(`artists/${id}/tracks/popular`)
+    } catch (err) {
+        console.error("Error - Get All Tracks by Id (Artists)", err)
+    }
+}
+
+// Other functionality
+document.addEventListener("DOMContentLoaded", function () {
+    // TODO: Implement other functionality here
+    register();
+
+    login();
+
+    // logout();
+
+    getPlaylists();
+
+    getArtists();
+
+    handleBackToHome();
 })
 
 
@@ -185,16 +653,12 @@ document.addEventListener("DOMContentLoaded", function () {
 document.addEventListener("DOMContentLoaded", async function () {
     const mainHeader = document.querySelector(".main-header");
     const authorButtons = mainHeader.querySelector(".auth-buttons");
-    const userMenu = mainHeader.querySelector(".user-menu");
-    const userAvatarImg = mainHeader.querySelector(".user-avatar img")
-
     try {
-        const { user, stats } = await httpRequest.get("users/me");
-        userMenu.classList.add("show");
-        authorButtons.classList.remove("show");
-        userAvatarImg.src = user.avatar_url;
+        const { user } = await httpRequest.get("users/me");
+        loginSuccess(user);
 
     } catch (err) {
+        console.log('err', err)
         authorButtons.classList.add("show");
     }
 })

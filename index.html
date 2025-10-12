@@ -19,7 +19,7 @@
     <!-- Left Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
-        <div class="logo">
+        <div class="logo js-back-home">
           <i class="fab fa-spotify"></i>
         </div>
       </div>
@@ -102,7 +102,7 @@
       <header class="main-header">
         <div class="search-container">
           <div class="search-box">
-            <button class="home-btn">
+            <button class="home-btn js-back-home">
               <i class="fas fa-home"></i>
             </button>
             <div class="search-input-wrapper">
@@ -132,7 +132,7 @@
 
       <div class="content-wrapper">
         <!-- Today's Biggest Hits Section -->
-        <section class="hits-section">
+        <section class="hits-section" id="hitsSection">
           <div class="section-header">
             <h2 class="section-heading">
               Today's biggest hits
@@ -224,7 +224,7 @@
         </section>
 
         <!-- Popular Artists Section -->
-        <section class="artists-section">
+        <section class="artists-section" id="artistsSection">
           <div class="section-header">
             <h2 class="section-heading">Popular artists</h2>
           </div>
@@ -303,7 +303,7 @@
         </section>
 
         <!-- Artist Hero Section -->
-        <section class="artist-hero">
+        <section class="artist-hero hide" id="artistHero">
           <div class="hero-background">
             <img src="placeholder.svg" alt="Đen artist background" class="hero-image" />
             <div class="hero-overlay"></div>
@@ -321,14 +321,14 @@
         </section>
 
         <!-- Artist Controls -->
-        <section class="artist-controls">
+        <section class="artist-controls hide" id="artistControls">
           <button class="play-btn-large">
             <i class="fas fa-play"></i>
           </button>
         </section>
 
         <!-- Popular Tracks -->
-        <section class="popular-section">
+        <section class="popular-section hide" id="artistPopular">
           <h2 class="section-title">Popular</h2>
           <div class="track-list">
             <div class="track-item">
@@ -533,6 +533,19 @@
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast-message" id="toastMessage">
+    <div class="toast-message-content">
+      <div class="toast-message-icon">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+      <div class="toast-message-text">
+        <span class="toast-message-title">Success</span>
+        <span class="toast-message-detail">Đăng ký thành công</span>
       </div>
     </div>
   </div>

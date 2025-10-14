@@ -67,32 +67,6 @@ function logout() {
     return;
 }
 
-function loginAndRegisterSuccess(user, message) {
-    const mainHeader = document.querySelector(".main-header");
-    const userMenu = mainHeader.querySelector(".user-menu");
-    const userAvatarImg = mainHeader.querySelector(".user-avatar img");
-
-    // remove author (login, register)
-    const authorButtons = mainHeader.querySelector(".auth-buttons");
-    authorButtons.classList.remove("show");
-
-    // show user
-    userMenu.classList.add("show");
-    if (user.avatar_url) {
-        userAvatarImg.src = user.avatar_url;
-    }
-
-    // Show Toast
-    if (message) {
-        showToast(message);
-    }
-}
-
-function loginSuccess(user) {
-    loginAndRegisterSuccess(user)
-    return;
-}
-
 
 // Auth Modal Functionality
 document.addEventListener("DOMContentLoaded", function () {
@@ -184,6 +158,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Close dropdown when clicking outside
     document.addEventListener("click", function (e) {
+        console.log('e.target', e.target)
         if (
             !userAvatar.contains(e.target) &&
             !userDropdown.contains(e.target)
@@ -208,6 +183,9 @@ document.addEventListener("DOMContentLoaded", function () {
         // TODO: Students will implement logout logic here
     });
 });
+
+
+//---------------------------------- Start All logic register and login ----------------------------------------
 
 // Register Functionality
 function register() {
@@ -322,6 +300,51 @@ function login() {
         })
 }
 
+// Show Toast
+function showToast(message) {
+    if (!message) {
+        return;
+    }
+    const toastMessage = document.querySelector("#toastMessage")
+    const toastMessageDetail = toastMessage.querySelector(".toast-message-detail")
+    toastMessage.classList.add("show")
+    toastMessageDetail.textContent = message;
+
+    setTimeout(() => {
+        toastMessage.classList.remove("show")
+    }, 2000);
+    return;
+}
+function loginAndRegisterSuccess(user, message) {
+    const mainHeader = document.querySelector(".main-header");
+    const userMenu = mainHeader.querySelector(".user-menu");
+    const userAvatarImg = mainHeader.querySelector(".user-avatar img");
+
+    // remove author (login, register)
+    const authorButtons = mainHeader.querySelector(".auth-buttons");
+    authorButtons.classList.remove("show");
+
+    // show user
+    userMenu.classList.add("show");
+    if (user.avatar_url) {
+        userAvatarImg.src = user.avatar_url;
+    }
+
+    // Show Toast
+    if (message) {
+        showToast(message);
+    }
+}
+
+function loginSuccess(user) {
+    loginAndRegisterSuccess(user)
+    return;
+}
+
+//---------------------------------- End All logic register and login ----------------------------------------
+
+
+//---------------------------------- Start All logic Common Playlists and Artist --------------------------------------------------
 function hideHitsAndArtists() {
     const hitsSection = document.querySelector("#hitsSection");
     const artistsSection = document.querySelector("#artistsSection");
@@ -331,12 +354,12 @@ function hideHitsAndArtists() {
     return;
 }
 
-// Show Detail PlayList
 function showAllTracksById(artistHeroData, tracksData) {
     const artistHero = document.querySelector("#artistHero");
     const artistControls = document.querySelector("#artistControls");
     const artistPopular = document.querySelector("#artistPopular");
     const trackList = artistPopular.querySelector(".track-list");
+    const btnFollow = artistControls.querySelector(".btnFollow");
 
     hideHitsAndArtists();
     artistHero.classList.remove("hide");
@@ -349,7 +372,11 @@ function showAllTracksById(artistHeroData, tracksData) {
             imageUrl,
             monthlyListeners,
             isVerified,
+            is_following
         } = artistHeroData;
+
+        btnFollow.textContent = is_following ? "Unfollow" : "Follow";
+        btnFollow.setAttribute("data-va", is_following)
 
         artistHero.innerHTML = ` 
         <div class="hero-background">
@@ -404,110 +431,11 @@ function showAllTracksById(artistHeroData, tracksData) {
     return;
 }
 
-function handleShowDetailPlayList() {
-    const hitsSection = document.querySelector("#hitsSection");
-    hitsSection.querySelectorAll(".hit-card")
-        .forEach(hit => {
-            hit.addEventListener("click", async function () {
-                const id = this.getAttribute("data-id");
-
-                const newUrl = `${location.pathname}?idPlayList=${id}`;
-                history.replaceState({}, '', newUrl);
-
-                const search = new URLSearchParams(window.location.search).get("idPlayList");
-                console.log('search', search)
-                console.log('location', location)
+//---------------------------------- End  All logic Common Playlists and Artist  --------------------------------------------------
 
 
-                const playlistDetail = await getPlaylistByID(id)
-                const { tracks } = await getAllTracksByIdPlaylist(id)
-                console.log('playlistDetail', playlistDetail)
-                console.log('tracks', tracks)
 
-                if (playlistDetail) {
-                    const artistHeroData = {
-                        name: playlistDetail.name,
-                        imageUrl: playlistDetail.image_url,
-                        monthlyListeners: formatNumberComma(playlistDetail.monthly_listeners) ?? '',
-                        isVerified: playlistDetail.is_verified ?? false,
-                    }
-                    const tracksData = tracks && tracks.map(track => ({
-                        position: track.position,
-                        imageUrl: track.artist_image_url,
-                        title: track.track_title,
-                        playCount: formatNumberComma(track.track_play_count),
-                        duration: formatTimeBySecond(track.track_duration)
-                    }));
-                    showAllTracksById(artistHeroData, tracksData);
-                }
-            });
-        });
-    return;
-}
-
-// Show Detail Artist
-function handleShowDetailArtist() {
-    const artistsSection = document.querySelector("#artistsSection");
-    const artistsGrid = artistsSection.querySelector('.artists-grid');
-
-    artistsGrid.querySelectorAll(".artist-card")
-        .forEach(artist => {
-            artist.addEventListener("click", async function () {
-                const id = artist.getAttribute("data-id");
-                const artistDetail = await getArtistByID(id)
-                const { tracks } = await getAllTracksByIdArtist(id)
-
-                console.log('artistDetail', artistDetail)
-                console.log('tracks', tracks)
-                if (artistDetail) {
-                    const artistHeroData = {
-                        name: artistDetail.name,
-                        imageUrl: artistDetail.image_url,
-                        monthlyListeners: formatNumberComma(artistDetail.monthly_listeners),
-                        isVerified: artistDetail.is_verified,
-                    }
-                    const tracksData = tracks && tracks.map(track => ({
-                        position: track.track_number,
-                        imageUrl: track.image_url,
-                        title: track.title,
-                        playCount: formatNumberComma(track.track_play_count),
-                        duration: formatTimeBySecond(track.duration)
-                    }));
-                    showAllTracksById(artistHeroData, tracksData);
-                }
-            })
-        })
-    return;
-}
-
-function showToast(message) {
-    if (!message) {
-        return;
-    }
-    const toastMessage = document.querySelector("#toastMessage")
-    const toastMessageDetail = toastMessage.querySelector(".toast-message-detail")
-    toastMessage.classList.add("show")
-    toastMessageDetail.textContent = message;
-
-    setTimeout(() => {
-        toastMessage.classList.remove("show")
-    }, 2000);
-    return;
-}
-
-// Back to Home
-function handleBackToHome() {
-    const btnBackToHome = document.querySelectorAll(".js-back-home");
-    btnBackToHome.forEach(btn => {
-        btn.addEventListener("click", function () {
-            const { origin, pathname } = location;
-            const url = `${origin}${pathname}`
-            location.assign(url);
-        })
-    })
-    return;
-}
-
+//---------------------------------- Start All logic Playlists  --------------------------------------------------
 
 // Load Get “Today’s biggest hits”:
 async function getPlaylists() {
@@ -515,7 +443,6 @@ async function getPlaylists() {
     const hitsGrid = hitsSection.querySelector(".hits-grid");
     try {
         const { playlists } = await httpRequest.get('playlists?limit=20&offset=0');
-        console.log('playlists', playlists)
         if (playlists?.length) {
             hitsGrid.innerHTML = playlists.map(playlist => {
                 const { id, image_url, name, user_display_name } = playlist
@@ -542,53 +469,6 @@ async function getPlaylists() {
         console.log('Error - Get Today’s biggest hits: ', err)
     }
     return;
-}
-
-// Load Get Data “Popular artists”:
-async function getArtists() {
-    const artistsSection = document.querySelector("#artistsSection");
-    const artistsGrid = artistsSection.querySelector(".artists-grid");
-    try {
-        const { artists } = await httpRequest.get("artists?limit=20&offset=0");
-        console.log('artists', artists)
-        if (artists?.length) {
-            artistsGrid.innerHTML = artists.map(artist => {
-                const { id, image_url, name, } = artist;
-                return (
-                    `<div class="artist-card" data-id=${id}>
-                        <div class="artist-card-cover">
-                            <img src=${image_url} alt=${name} />
-                            <button class="artist-play-btn">
-                            <i class="fas fa-play"></i>
-                            </button>
-                        </div>
-                        <div class="artist-card-info">
-                            <h3 class="artist-card-name">${name}</h3>
-                            <p class="artist-card-type">Artist</p>
-                        </div>
-                    </div>`
-                );
-            }).join("");
-
-            handleShowDetailArtist();
-        }
-    } catch (err) {
-        console.log("Error - Get Data Popular artists", err)
-    }
-}
-
-//Artist: API Artists/Get Artist by ID
-async function getArtistByID(id) {
-    if (!id) {
-        return null;
-    }
-    try {
-        const response = await httpRequest.get(`artists/${id}`);
-        return response;
-    } catch (err) {
-        console.error('Get Artist by ID: ', err)
-        return null;
-    }
 }
 
 // Playlist: GET API Playlists/Get Playlist by ID
@@ -620,6 +500,173 @@ async function getAllTracksByIdPlaylist(id) {
     }
 }
 
+// Show Detail PlayList
+async function handleShowDetailPlayListLoaded() {
+    const id = new URLSearchParams(window.location.search).get("idPlayList");
+    if (id) {
+        await renderDetailPlayList(id)
+    }
+    return;
+}
+
+function handleShowDetailPlayList() {
+    const hitsSection = document.querySelector("#hitsSection");
+    hitsSection.querySelectorAll(".hit-card")
+        .forEach(hit => {
+            hit.addEventListener("click", async function () {
+                const id = this.getAttribute("data-id");
+
+                const newUrl = `${location.pathname}?idPlayList=${id}`;
+                history.replaceState({}, '', newUrl);
+
+                await renderDetailPlayList(id);
+            });
+        });
+    return;
+}
+
+async function renderDetailPlayList(id) {
+    const playlistDetail = await getPlaylistByID(id)
+    const { tracks } = await getAllTracksByIdPlaylist(id)
+    console.log('tracks', tracks)
+
+    if (playlistDetail) {
+        const artistHeroData = {
+            name: playlistDetail.name,
+            imageUrl: playlistDetail.image_url,
+            monthlyListeners: formatNumberComma(playlistDetail.monthly_listeners) ?? '',
+            isVerified: playlistDetail.is_verified ?? false,
+            is_following: playlistDetail.is_following,
+        }
+        const tracksData = tracks && tracks.map(track => ({
+            position: track.position,
+            imageUrl: track.artist_image_url,
+            title: track.track_title,
+            playCount: formatNumberComma(track.track_play_count),
+            duration: formatTimeBySecond(track.track_duration)
+        }));
+        showAllTracksById(artistHeroData, tracksData, id);
+    }
+}
+//---------------------------------- End All logic PlayList  --------------------------------------------------
+
+
+
+//---------------------------------- Start All logic Artists  --------------------------------------------------
+
+// Load Get Data “Popular artists”:
+async function getArtists() {
+    const artistsSection = document.querySelector("#artistsSection");
+    const artistsGrid = artistsSection.querySelector(".artists-grid");
+    try {
+        const { artists } = await httpRequest.get("artists?limit=20&offset=0");
+        if (artists?.length) {
+            artistsGrid.innerHTML = artists.map(artist => {
+                const { id, image_url, name, } = artist;
+                return (
+                    `<div class="artist-card" data-id=${id}>
+                        <div class="artist-card-cover">
+                            <img src=${image_url} alt=${name} />
+                            <button class="artist-play-btn">
+                            <i class="fas fa-play"></i>
+                            </button>
+                        </div>
+                        <div class="artist-card-info">
+                            <h3 class="artist-card-name">${name}</h3>
+                            <p class="artist-card-type">Artist</p>
+                        </div>
+                    </div>`
+                );
+            }).join("");
+
+            handleShowDetailArtist();
+        }
+    } catch (err) {
+        console.log("Error - Get Data Popular artists", err)
+    }
+}
+
+// Show Detail Artist
+async function handleShowDetailArtistLoaded() {
+    const id = new URLSearchParams(window.location.search).get("idArtist");
+    if (id) {
+        await renderDetailArtist(id)
+    }
+    return;
+}
+
+function handleShowDetailArtist() {
+    const artistsSection = document.querySelector("#artistsSection");
+    const artistsGrid = artistsSection.querySelector('.artists-grid');
+    const artistCards = artistsGrid?.querySelectorAll(".artist-card");
+
+    const libraryContent = document.querySelector("#libraryContent");
+    const libraryItems = libraryContent.querySelectorAll(".library-item");
+
+    const artistElements = [
+        ...(artistCards || []),
+        ...(libraryItems || [])
+    ];
+
+    artistElements
+        .forEach(artist => {
+            artist.addEventListener("click", async function () {
+                const id = artist.getAttribute("data-id");
+
+                const newUrl = `${location.pathname}?idArtist=${id}`;
+                history.replaceState({}, '', newUrl);
+                if (id) {
+                    await renderDetailArtist(id)
+                }
+
+            })
+        })
+    return;
+}
+
+async function renderDetailArtist(id) {
+    const artistDetail = await getArtistByID(id)
+    const { tracks } = await getAllTracksByIdArtist(id)
+    console.log('tracks', tracks)
+    console.log('artistDetail', artistDetail)
+
+    if (artistDetail) {
+        const artistHeroData = {
+            name: artistDetail.name,
+            imageUrl: artistDetail.image_url,
+            monthlyListeners: formatNumberComma(artistDetail.monthly_listeners),
+            isVerified: artistDetail.is_verified,
+            is_following: artistDetail.is_following,
+        }
+
+        const tracksData = tracks && tracks.map(track => ({
+            position: track.track_number,
+            imageUrl: track.image_url,
+            title: track.title,
+            playCount: formatNumberComma(track.track_play_count),
+            duration: formatTimeBySecond(track.duration)
+        }));
+
+        showAllTracksById(artistHeroData, tracksData);
+        handleFollowArtist(id);
+    }
+}
+
+
+//Artist: API Artists/Get Artist by ID
+async function getArtistByID(id) {
+    if (!id) {
+        return null;
+    }
+    try {
+        const response = await httpRequest.get(`artists/${id}`);
+        return response;
+    } catch (err) {
+        console.error('Get Artist by ID: ', err)
+        return null;
+    }
+}
+
 // Get All Tracks by Id (Artists)
 async function getAllTracksByIdArtist(id) {
     if (!id) {
@@ -632,6 +679,83 @@ async function getAllTracksByIdArtist(id) {
     }
 }
 
+// Follow Artist
+function handleFollowArtist(id) {
+    if (!id) {
+        return;
+    }
+    const artistControls = document.querySelector("#artistControls")
+    const btnFollow = artistControls.querySelector(".btnFollow");
+    const dataValue = btnFollow.getAttribute("data-va")
+    console.log('dataValue', dataValue)
+
+    btnFollow.addEventListener("click", async function () {
+        try {
+            if (dataValue === "false") {
+                await httpRequest.post(`artists/${id}/follow`);
+            } else if (dataValue === "true") {
+                await httpRequest.del(`artists/${id}/follow`);
+            }
+            // const response = await httpRequest.del(`artists/${id}/follow`);
+            renderYourLibrary()
+            renderDetailArtist(id)
+            return;
+
+        } catch (err) {
+            console.error('Error - Follow Artist: ', err)
+        }
+    })
+}
+
+//---------------------------------- End All logic Artists  --------------------------------------------------
+
+
+//---------------------------------- Start All logic Sidebar  --------------------------------------------------
+
+async function renderYourLibrary() {
+    const libraryContent = document.querySelector("#libraryContent");
+    try {
+        const { artists } = await httpRequest.get("me/following?limit=20&offset=0");
+        if (artists?.length) {
+            libraryContent.innerHTML = artists.map(artist => {
+                const { id, name, image_url } = artist;
+                return (
+                    `<div class="library-item" data-id=${id}>
+                        <img src="${image_url}" alt="${name}" class="item-image" />
+                        <div class="item-info">
+                        <div class="item-title">${name}</div>
+                        <div class="item-subtitle">Artist</div>
+                        </div>
+                    </div>`
+                );
+            }).join("");
+        }
+    } catch (err) {
+        console.error("Error - Render Your Library:", err)
+    }
+
+}
+
+
+
+//---------------------------------- End All logic Sidebar  --------------------------------------------------
+
+
+
+
+// Back to Home
+function handleBackToHome() {
+    const btnBackToHome = document.querySelectorAll(".js-back-home");
+    btnBackToHome.forEach(btn => {
+        btn.addEventListener("click", function () {
+            const { origin, pathname } = location;
+            const url = `${origin}${pathname}`
+            location.assign(url);
+        })
+    })
+    return;
+}
+
 // Other functionality
 document.addEventListener("DOMContentLoaded", function () {
     // TODO: Implement other functionality here
@@ -639,13 +763,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
     login();
 
-    // logout();
-
     getPlaylists();
 
     getArtists();
 
     handleBackToHome();
+
+    handleShowDetailPlayListLoaded();
+
+    handleShowDetailArtistLoaded();
+
+    handleShowDetailArtist();
+
+    //Sidebar
+    renderYourLibrary()
 })
 
 

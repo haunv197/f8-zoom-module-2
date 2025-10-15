@@ -866,6 +866,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
         const { user } = await httpRequest.get("users/me");
         loginSuccess(user);
+        await renderYourLibrary();
 
     } catch (err) {
         console.log('err', err)

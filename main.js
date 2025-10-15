@@ -1,5 +1,10 @@
 import httpRequest from "./utils/httpRequest.js";
 
+const STATUS = {
+    SUCCESS: "success",
+    WARNING: "warning"
+}
+
 // handleXSS
 function escapeHTML(str) {
     const div = document.createElement("div");
@@ -64,6 +69,8 @@ function logout() {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("userCurrent");
+    location.href = "/f8-zoom-module-2";
+
     return;
 }
 
@@ -158,7 +165,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Close dropdown when clicking outside
     document.addEventListener("click", function (e) {
-        console.log('e.target', e.target)
+        // console.log('e.target', e.target)
         if (
             !userAvatar.contains(e.target) &&
             !userDropdown.contains(e.target)
@@ -201,7 +208,6 @@ function register() {
         .querySelector(".auth-form-content")
         .addEventListener("submit", async function (e) {
             e.preventDefault();
-            // formGroupEmail.classList.remove("invalid")
             formGroupPassword.classList.remove("invalid")
 
             const credentials = {
@@ -214,10 +220,12 @@ function register() {
                     "auth/register",
                     credentials
                 )
+
                 localStorage.setItem("access_token", access_token)
                 localStorage.setItem("refresh_token", refresh_token)
                 localStorage.setItem("userCurrent", JSON.stringify(user))
                 loginAndRegisterSuccess(user, "Đăng kí thành công");
+                closeModal();
 
             } catch (err) {
                 const { error } = err.response;
@@ -301,21 +309,33 @@ function login() {
 }
 
 // Show Toast
-function showToast(message) {
+function showToast(message, status = "success") {
     if (!message) {
         return;
     }
     const toastMessage = document.querySelector("#toastMessage")
     const toastMessageDetail = toastMessage.querySelector(".toast-message-detail")
+
+    switch (status) {
+        case "warning":
+            toastMessage.classList.add("warning");
+            break;
+        default:
+            toastMessage.classList.remove("warning");
+            break;
+    }
+
     toastMessage.classList.add("show")
     toastMessageDetail.textContent = message;
+
 
     setTimeout(() => {
         toastMessage.classList.remove("show")
     }, 2000);
     return;
 }
-function loginAndRegisterSuccess(user, message) {
+
+async function loginAndRegisterSuccess(user, message) {
     const mainHeader = document.querySelector(".main-header");
     const userMenu = mainHeader.querySelector(".user-menu");
     const userAvatarImg = mainHeader.querySelector(".user-avatar img");
@@ -334,6 +354,9 @@ function loginAndRegisterSuccess(user, message) {
     if (message) {
         showToast(message);
     }
+
+    //render Sidebar
+    await renderYourLibrary();
 }
 
 function loginSuccess(user) {
@@ -354,6 +377,39 @@ function hideHitsAndArtists() {
     return;
 }
 
+function showHitsAndArtists() {
+    const hitsSection = document.querySelector("#hitsSection");
+    const artistsSection = document.querySelector("#artistsSection");
+
+    hitsSection.classList.remove("hide");
+    artistsSection.classList.remove("hide");
+    return;
+}
+
+function hideDetailPlaylistsAndArtist() {
+    const artistHero = document.querySelector("#artistHero");
+    const artistControls = document.querySelector("#artistControls");
+    const artistPopular = document.querySelector("#artistPopular");
+
+    artistHero.classList.add("hide");
+    artistControls.classList.add("hide");
+    artistPopular.classList.add("hide");
+    return;
+}
+
+
+function showDetailPlaylistsAndArtist() {
+    const artistHero = document.querySelector("#artistHero");
+    const artistControls = document.querySelector("#artistControls");
+    const artistPopular = document.querySelector("#artistPopular");
+
+    artistHero.classList.remove("hide");
+    artistControls.classList.remove("hide");
+    artistPopular.classList.remove("hide");
+    return;
+}
+
+
 function showAllTracksById(artistHeroData, tracksData) {
     const artistHero = document.querySelector("#artistHero");
     const artistControls = document.querySelector("#artistControls");
@@ -362,9 +418,7 @@ function showAllTracksById(artistHeroData, tracksData) {
     const btnFollow = artistControls.querySelector(".btnFollow");
 
     hideHitsAndArtists();
-    artistHero.classList.remove("hide");
-    artistControls.classList.remove("hide");
-    artistPopular.classList.remove("hide");
+    showDetailPlaylistsAndArtist();
 
     if (artistHeroData) {
         const {
@@ -627,8 +681,6 @@ function handleShowDetailArtist() {
 async function renderDetailArtist(id) {
     const artistDetail = await getArtistByID(id)
     const { tracks } = await getAllTracksByIdArtist(id)
-    console.log('tracks', tracks)
-    console.log('artistDetail', artistDetail)
 
     if (artistDetail) {
         const artistHeroData = {
@@ -648,7 +700,7 @@ async function renderDetailArtist(id) {
         }));
 
         showAllTracksById(artistHeroData, tracksData);
-        handleFollowArtist(id);
+        handleFollowArtist();
     }
 }
 
@@ -680,25 +732,37 @@ async function getAllTracksByIdArtist(id) {
 }
 
 // Follow Artist
-function handleFollowArtist(id) {
-    if (!id) {
-        return;
-    }
+function handleFollowArtist() {
     const artistControls = document.querySelector("#artistControls")
     const btnFollow = artistControls.querySelector(".btnFollow");
     const dataValue = btnFollow.getAttribute("data-va")
-    console.log('dataValue', dataValue)
 
-    btnFollow.addEventListener("click", async function () {
+    btnFollow.addEventListener("click", async function (e) {
+        e.target.setAttribute("disabled", true);
+        const idArtist = new URLSearchParams(window.location.search).get("idArtist");
+        const auth = localStorage.getItem("access_token")
+        if (!auth) {
+            showToast("Bạn cần đăng nhập để sử dụng chức năng này!", STATUS.WARNING)
+            return;
+        }
+
         try {
             if (dataValue === "false") {
-                await httpRequest.post(`artists/${id}/follow`);
+                e.target.setAttribute("data-va", "true")
+                e.target.textContent = "Unfollow";
+                await httpRequest.post(`artists/${idArtist}/follow`);
             } else if (dataValue === "true") {
-                await httpRequest.del(`artists/${id}/follow`);
+                e.target.textContent = "Follow";
+                e.target.setAttribute("data-va", "false")
+
+                await httpRequest.del(`artists/${idArtist}/follow`);
             }
+            e.target.removeAttribute("disabled");
+
+
             // const response = await httpRequest.del(`artists/${id}/follow`);
-            renderYourLibrary()
-            renderDetailArtist(id)
+            // renderDetailArtist(idArtist)
+            await renderYourLibrary()
             return;
 
         } catch (err) {
@@ -734,31 +798,42 @@ async function renderYourLibrary() {
         console.error("Error - Render Your Library:", err)
     }
 
+    handleShowDetailArtist();
 }
-
 
 
 //---------------------------------- End All logic Sidebar  --------------------------------------------------
 
 
-
-
 // Back to Home
+
+function renderHomePage() {
+    showHitsAndArtists();
+    hideDetailPlaylistsAndArtist();
+    return;
+}
+
 function handleBackToHome() {
     const btnBackToHome = document.querySelectorAll(".js-back-home");
     btnBackToHome.forEach(btn => {
-        btn.addEventListener("click", function () {
+        btn.addEventListener("click", function (e) {
+            console.log("btn home", e.target)
             const { origin, pathname } = location;
             const url = `${origin}${pathname}`
-            location.assign(url);
+            history.replaceState({}, '', url);
+            renderHomePage();
         })
     })
     return;
 }
 
 // Other functionality
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
     // TODO: Implement other functionality here
+
+    //Sidebar luôn chạy đầu
+    await renderYourLibrary()
+
     register();
 
     login();
@@ -773,10 +848,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     handleShowDetailArtistLoaded();
 
-    handleShowDetailArtist();
+    // handleShowDetailArtist();
 
-    //Sidebar
-    renderYourLibrary()
+    // handleFollowArtist();
 })
 
 
@@ -785,6 +859,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     const mainHeader = document.querySelector(".main-header");
     const authorButtons = mainHeader.querySelector(".auth-buttons");
     try {
+        const auth = localStorage.getItem("access_token");
+        if (!auth) {
+            authorButtons.classList.add("show");
+            return;
+        }
         const { user } = await httpRequest.get("users/me");
         loginSuccess(user);
 

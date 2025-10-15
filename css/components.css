@@ -1145,6 +1145,10 @@
   transform: translateX(100%);
   transition: 0.3s;
 }
+.toast-message.warning {
+  border-color: #e79911;
+}
+
 .toast-message.show {
   transform: translateX(0);
 }
@@ -1153,6 +1157,11 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.toast-message-icon {
+  color: #24ba24;
+  font-size: 23px;
 }
 
 .toast-message-icon {
@@ -1171,4 +1180,19 @@
 }
 .toast-message-detail {
   color: #6e6d6d;
+}
+
+.toast-message.warning .toast-message-icon {
+  color: #e79911;
+}
+.icon-warning {
+  display: none;
+}
+
+.toast-message.warning .icon-warning {
+  display: block;
+}
+
+.toast-message.warning .icon-success {
+  display: none;
 }

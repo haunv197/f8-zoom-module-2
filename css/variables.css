@@ -15,6 +15,10 @@
   --accent-hover: #1ed760;
   --accent-active: #169c46;
 
+  --success-primary: #24ba24;
+
+  --warning-primary: #e79911;
+
   --border-color: #2e2e2e;
   --shadow: rgba(0, 0, 0, 0.5);
 
@@ -45,4 +49,5 @@
   --z-toast: 35;
   --z-modal: 40;
   --z-tooltip: 50;
+  --z-context-menu: 55;
 }

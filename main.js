@@ -5,6 +5,12 @@ const STATUS = {
     WARNING: "warning"
 }
 
+const TYPE_LIBRARY = {
+    ARTIST: "artist",
+    PLAY_LIST: "playlist"
+}
+
+
 // handleXSS
 function escapeHTML(str) {
     const div = document.createElement("div");
@@ -102,7 +108,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Function to open modal
     function openModal() {
         authModal.classList.add("show");
-        document.body.style.overflow = "hidden"; // Prevent background scrolling
+        document.body.style.overflow = "hide"; // Prevent background scrolling
     }
 
     // Open modal with Sign Up form when clicking Sign Up button
@@ -425,7 +431,6 @@ function showAllTracksById(artistHeroData, tracksData) {
             name,
             imageUrl,
             monthlyListeners,
-            isVerified,
             is_following
         } = artistHeroData;
 
@@ -633,7 +638,7 @@ async function getArtists() {
                 );
             }).join("");
 
-            handleShowDetailArtist();
+            initShowDetailArtist();
         }
     } catch (err) {
         console.log("Error - Get Data Popular artists", err)
@@ -649,34 +654,7 @@ async function handleShowDetailArtistLoaded() {
     return;
 }
 
-function handleShowDetailArtist() {
-    const artistsSection = document.querySelector("#artistsSection");
-    const artistsGrid = artistsSection.querySelector('.artists-grid');
-    const artistCards = artistsGrid?.querySelectorAll(".artist-card");
 
-    const libraryContent = document.querySelector("#libraryContent");
-    const libraryItems = libraryContent.querySelectorAll(".library-item");
-
-    const artistElements = [
-        ...(artistCards || []),
-        ...(libraryItems || [])
-    ];
-
-    artistElements
-        .forEach(artist => {
-            artist.addEventListener("click", async function () {
-                const id = artist.getAttribute("data-id");
-
-                const newUrl = `${location.pathname}?idArtist=${id}`;
-                history.replaceState({}, '', newUrl);
-                if (id) {
-                    await renderDetailArtist(id)
-                }
-
-            })
-        })
-    return;
-}
 
 async function renderDetailArtist(id) {
     const artistDetail = await getArtistByID(id)
@@ -700,7 +678,6 @@ async function renderDetailArtist(id) {
         }));
 
         showAllTracksById(artistHeroData, tracksData);
-        handleFollowArtist();
     }
 }
 
@@ -731,45 +708,157 @@ async function getAllTracksByIdArtist(id) {
     }
 }
 
-// Follow Artist
-function handleFollowArtist() {
-    const artistControls = document.querySelector("#artistControls")
-    const btnFollow = artistControls.querySelector(".btnFollow");
-    const dataValue = btnFollow.getAttribute("data-va")
+// Show Detail Artist
+function initShowDetailArtist() {
+    const artistsSection = document.querySelector("#artistsSection");
+    const libraryContent = document.querySelector("#libraryContent");
 
-    btnFollow.addEventListener("click", async function (e) {
-        e.target.setAttribute("disabled", true);
-        const idArtist = new URLSearchParams(window.location.search).get("idArtist");
-        const auth = localStorage.getItem("access_token")
-        if (!auth) {
-            showToast("Bạn cần đăng nhập để sử dụng chức năng này!", STATUS.WARNING)
-            return;
-        }
+    if (!artistsSection || !libraryContent) return;
 
-        try {
-            if (dataValue === "false") {
-                e.target.setAttribute("data-va", "true")
-                e.target.textContent = "Unfollow";
-                await httpRequest.post(`artists/${idArtist}/follow`);
-            } else if (dataValue === "true") {
-                e.target.textContent = "Follow";
-                e.target.setAttribute("data-va", "false")
+    const artistsGrid = artistsSection.querySelector('.artists-grid');
+    const artistCards = artistsGrid?.querySelectorAll(".artist-card");
 
-                await httpRequest.del(`artists/${idArtist}/follow`);
-            }
-            e.target.removeAttribute("disabled");
+    const libraryItems = libraryContent.querySelectorAll(".library-item");
 
+    if (!artistCards?.length || !libraryItems?.length) return;
 
-            // const response = await httpRequest.del(`artists/${id}/follow`);
-            // renderDetailArtist(idArtist)
-            await renderYourLibrary()
-            return;
+    const artistElements = [
+        ...(artistCards || []),
+        ...(libraryItems || [])
+    ];
+    artistElements
+        .forEach(artist => {
+            // Gỡ listener cũ trước (nếu có)
+            artist.removeEventListener("click", handleArtistDetailClick)
 
-        } catch (err) {
-            console.error('Error - Follow Artist: ', err)
-        }
-    })
+            // Gắn mới
+            artist.addEventListener("click", handleArtistDetailClick)
+        })
+    return;
 }
+
+async function handleArtistDetailClick(e) {
+    const target = e.target;
+    let self = null;
+    if (target.closest(".library-item")) {
+        self = target.closest(".library-item");
+    }
+    if (target.closest(".artist-card")) {
+        self = target.closest(".artist-card");
+    }
+
+    if (!self) return;
+
+    const id = self.getAttribute("data-id");
+
+    const newUrl = `${location.pathname}?idArtist=${id}`;
+    history.replaceState({}, '', newUrl);
+    if (id) {
+        await renderDetailArtist(id)
+    }
+    return;
+}
+
+// Follow Artist
+// 1️⃣ Tách logic xử lý ra một hàm riêng
+async function handleFollowClick(e) {
+    if (!e.target.classList.contains("btnFollow")) return;
+
+    const dataVal = e.target.getAttribute("data-va");
+    const idArtist = new URLSearchParams(window.location.search).get("idArtist");
+    const auth = localStorage.getItem("access_token");
+
+    if (!auth) {
+        showToast("Bạn cần đăng nhập để sử dụng chức năng này!", STATUS.WARNING);
+        return;
+    }
+
+    e.target.setAttribute("disabled", true);
+
+    try {
+        if (dataVal === "false") {
+            await httpRequest.post(`artists/${idArtist}/follow`);
+        } else {
+            await httpRequest.del(`artists/${idArtist}/follow`);
+        }
+
+        e.target.setAttribute("data-va", dataVal === "true" ? "false" : "true");
+        e.target.textContent = dataVal === "true" ? "Follow" : "Unfollow";
+        await renderYourLibrary();
+
+    } catch (err) {
+        console.error("Error - Follow Artist: ", err);
+    } finally {
+        e.target.removeAttribute("disabled");
+    }
+}
+
+// 2️⃣ Gắn event listener 1 lần duy nhất khi load trang
+function initFollowButton() {
+    const artistControls = document.querySelector("#artistControls");
+    if (!artistControls) return;
+    artistControls.onclick = (e) => { handleFollowClick(e) }
+}
+
+
+function handleHideUnFollow(e) {
+    if (!e.target.closest("#libraryContent") && !e.target.closest("#contextMenuUnfollow")) {
+        const menu = document.querySelector("#contextMenuUnfollow");
+        menu.classList.add("hide");
+    }
+    return;
+}
+
+
+function handleUnFollowFromContextMenu(libraryItem, event) {
+    const type = libraryItem.getAttribute("data-type");
+    const id = libraryItem.getAttribute("data-id");
+
+    const contextMenuUnfollow = document.querySelector("#contextMenuUnfollow");
+    const contextMenuBtn = contextMenuUnfollow.querySelector(".context-menu-btn")
+    const contextMenuText = contextMenuUnfollow.querySelector(".context-menu-text")
+
+    contextMenuUnfollow.classList.remove("hide")
+    contextMenuUnfollow.style.left = `${event.clientX}px`;
+    contextMenuUnfollow.style.top = `${event.clientY}px`;
+
+
+    switch (type) {
+        case TYPE_LIBRARY.ARTIST:
+            contextMenuText.textContent = "Unfollow"
+            break;
+        case TYPE_LIBRARY.PLAY_LIST:
+            contextMenuText.textContent = "Delete"
+            break;
+        default:
+            break;
+    }
+
+    // Gán lại sự kiện click (mỗi lần chỉ có 1)
+    contextMenuBtn.onclick = () => handleUnFollow(id);
+
+    return;
+}
+
+async function handleUnFollow(id) {
+    const contextMenuUnfollow = document.querySelector("#contextMenuUnfollow");
+    const artistControls = document.querySelector("#artistControls");
+    const idArtistCurrent = new URLSearchParams(location.search).get("idArtist");
+
+    try {
+        await httpRequest.del(`artists/${id}/follow`);
+    } catch (err) {
+        console.error("Lỗi khi unfollow", err)
+    }
+
+    contextMenuUnfollow.classList.add("hide")
+
+    await renderYourLibrary();
+    if (!artistControls.classList.contains("hide") && idArtistCurrent === id)
+        await renderDetailArtist(id)
+    return;
+}
+
 
 //---------------------------------- End All logic Artists  --------------------------------------------------
 
@@ -784,7 +873,7 @@ async function renderYourLibrary() {
             libraryContent.innerHTML = artists.map(artist => {
                 const { id, name, image_url } = artist;
                 return (
-                    `<div class="library-item" data-id=${id}>
+                    `<div class="library-item" data-id=${id} data-type=${TYPE_LIBRARY.ARTIST}>
                         <img src="${image_url}" alt="${name}" class="item-image" />
                         <div class="item-info">
                         <div class="item-title">${name}</div>
@@ -793,12 +882,14 @@ async function renderYourLibrary() {
                     </div>`
                 );
             }).join("");
+        } else {
+            libraryContent.innerHTML = "";
         }
     } catch (err) {
         console.error("Error - Render Your Library:", err)
     }
 
-    handleShowDetailArtist();
+    initShowDetailArtist();
 }
 
 
@@ -816,8 +907,7 @@ function renderHomePage() {
 function handleBackToHome() {
     const btnBackToHome = document.querySelectorAll(".js-back-home");
     btnBackToHome.forEach(btn => {
-        btn.addEventListener("click", function (e) {
-            console.log("btn home", e.target)
+        btn.addEventListener("click", function () {
             const { origin, pathname } = location;
             const url = `${origin}${pathname}`
             history.replaceState({}, '', url);
@@ -828,11 +918,8 @@ function handleBackToHome() {
 }
 
 // Other functionality
-document.addEventListener("DOMContentLoaded", async function () {
+document.addEventListener("DOMContentLoaded", function () {
     // TODO: Implement other functionality here
-
-    //Sidebar luôn chạy đầu
-    await renderYourLibrary()
 
     register();
 
@@ -848,11 +935,31 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     handleShowDetailArtistLoaded();
 
-    // handleShowDetailArtist();
+    initFollowButton();
 
-    // handleFollowArtist();
+    // hide unfollow popup
+    document.addEventListener("click", handleHideUnFollow);
+    document.addEventListener("contextmenu", handleHideUnFollow);
+
+    document.addEventListener("mouseover", (e) => {
+        console.log("e", e);
+        console.log(e.target)
+    })
+
 })
 
+// Disabled Contextmenu 
+document.addEventListener("contextmenu", e => {
+    // chặn hành vi mặc định khi user click chuột phải
+    e.preventDefault();
+
+    // Xử lý với unfollow or delete với Artist, playlist
+    const libraryContent = e.target.closest("#libraryContent");
+    if (libraryContent) {
+        const libraryItem = e.target.closest(".library-item");
+        if (libraryItem) handleUnFollowFromContextMenu(libraryItem, e)
+    }
+})
 
 // Get User Functionality
 document.addEventListener("DOMContentLoaded", async function () {

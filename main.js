@@ -941,10 +941,8 @@ document.addEventListener("DOMContentLoaded", function () {
     document.addEventListener("click", handleHideUnFollow);
     document.addEventListener("contextmenu", handleHideUnFollow);
 
-    document.addEventListener("mouseover", (e) => {
-        console.log("e", e);
-        console.log(e.target)
-    })
+
+
 
 })
 

@@ -27,7 +27,7 @@
       <nav class="sidebar-nav">
         <div class="nav-section">
           <h2 class="section-title">Your Library</h2>
-          <button class="create-btn">
+          <button class="create-btn" data-tooltip="Tạo danh sách phát">
             <i class="fas fa-plus"></i>
             Create
           </button>
@@ -39,7 +39,7 @@
         </div>
 
         <div class="search-library">
-          <button class="search-library-btn">
+          <button class="search-library-btn" data-tooltip="Tìm kiếm trong thư viện">
             <i class="fas fa-search"></i>
           </button>
           <button class="sort-btn">
@@ -102,7 +102,7 @@
       <header class="main-header">
         <div class="search-container">
           <div class="search-box">
-            <button class="home-btn js-back-home" data-tooltip="Trang chủ">
+            <button class="home-btn js-back-home" data-tooltip="Trang chủ" tooltip-bottom="true">
               <i class="fas fa-home"></i>
             </button>
             <div class="search-input-wrapper">
@@ -400,26 +400,26 @@
           </div>
           <div class="player-artist">Noo Phước Thịnh</div>
         </div>
-        <button class="add-btn">
+        <button class="add-btn" data-tooltip="Thêm vào bài yêu thích">
           <i class="fa-solid fa-plus"></i>
         </button>
       </div>
 
       <div class="player-center">
         <div class="player-controls">
-          <button class="control-btn active">
+          <button class="control-btn active" data-tooltip="Bật trộn bài">
             <i class="fas fa-random"></i>
           </button>
-          <button class="control-btn">
+          <button class="control-btn" data-tooltip="Trước">
             <i class="fas fa-step-backward"></i>
           </button>
-          <button class="control-btn play-btn">
+          <button class="control-btn play-btn" data-tooltip="Phát">
             <i class="fas fa-pause"></i>
           </button>
-          <button class="control-btn">
+          <button class="control-btn" data-tooltip="Tiếp">
             <i class="fas fa-step-forward"></i>
           </button>
-          <button class="control-btn">
+          <button class="control-btn" data-tooltip="Lặp lại">
             <i class="fas fa-redo"></i>
           </button>
         </div>
@@ -434,11 +434,11 @@
       </div>
 
       <div class="player-right">
-        <button class="control-btn">
+        <button class="control-btn" data-tooltip="Lời bài hát">
           <i class="fas fa-microphone"></i>
         </button>
         <div class="volume-container">
-          <button class="control-btn">
+          <button class="control-btn" data-tooltip="Âm lượng">
             <i class="fas fa-volume-down"></i>
           </button>
           <div class="volume-bar">
@@ -446,7 +446,7 @@
             <div class="volume-handle"></div>
           </div>
         </div>
-        <button class="control-btn">
+        <button class="control-btn" data-tooltip="Mở chế đồ toàn màn hình">
           <i class="fas fa-expand"></i>
         </button>
       </div>
@@ -567,7 +567,12 @@
       </li>
     </ul>
   </div>
+
+  <!-- Tooltip -->
+  <div class="tooltip js-tooltip"></div>
+
   <script src="main.js" type="module"></script>
+  <script src="./utils/tooltip.js"></script>
 </body>
 
 </html>

@@ -1223,3 +1223,18 @@
   font-size: 20px;
   color: var(--success-primary);
 }
+
+
+.tooltip{
+  position: fixed;
+  background-color:#2a2a2a;
+  color:#fff;
+  z-index: var(--z-tooltip);
+  padding: 0.25rem 0.35rem;
+  transform: translateX(-50%);
+  border-radius: 4px;
+  font-size:14px;
+}
+.tooltip.hide{
+  display: none;
+}

@@ -415,6 +415,110 @@ function showDetailPlaylistsAndArtist() {
     return;
 }
 
+function handleTrackClick() {
+    const artistPopular = document.querySelector("#artistPopular");
+    const trackList = artistPopular.querySelector(".track-list");
+    const artist = JSON.parse(localStorage.getItem("artist"));
+    trackList.onclick = (e) => {
+        const trackItem = e.target.closest(".track-item");
+        if (!trackItem) return;
+
+        const idTrack = trackItem.getAttribute("id");
+        if (artist) {
+            handleChangeTrack(artist, idTrack)
+        }
+    }
+}
+
+
+function handleChangeTrack(artist, idTrack) {
+    const player = document.querySelector("#player");
+    const audio = document.querySelector("#audio");
+    const playerImage = player.querySelector(".player-image");
+    const playerTitle = player.querySelector(".player-title");
+    const playerArtist = player.querySelector(".player-artist");
+    const progressFill = player.querySelector(".progress-fill");
+    const btnTogglePlay = player.querySelector(".play-btn");
+    const playIcon = player.querySelector("#play-icon");
+    // const btnPrev = player.querySelector(".btn-prev");
+    // const btnNext = player.querySelector(".btn-next");
+
+    // const NEXT = 1;
+    // const PREV = -1;
+
+    const currentTimeElement = player.querySelector(".current-time");
+    const durationElement = player.querySelector(".duration");
+
+    const { tracks, artistDetail } = artist;
+
+    const track = tracks?.find(item => item.id === idTrack)
+
+    const { image_url, audio_url, title } = track;
+
+    playerImage.src = image_url;
+    playerTitle.textContent = title;
+    playerArtist.textContent = artistDetail.name;
+    audio.src = audio_url;
+
+    audio.play();
+
+    // Xu ly su kien
+    btnTogglePlay.onclick = () => {
+        if (audio.paused) {
+            audio.play();
+        } else {
+            audio.pause();
+        }
+    }
+
+    // Doi icon pause thanh song play
+    audio.onplay = () => {
+        playIcon.classList.add("fa-pause");
+        playIcon.classList.remove("fa-play");
+    }
+
+    // Doi icon play thanh song pause
+    audio.onpause = () => {
+        playIcon.classList.add("fa-play");
+        playIcon.classList.remove("fa-pause");
+    }
+
+    // Xử lý progress chạy theo thời gian bài hát được cập nhật
+    audio.ontimeupdate = () => {
+        const { duration, currentTime } = audio;
+
+        if (!duration) {
+            return;
+        }
+        currentTimeElement.textContent = formatTimeBySecond(Math.round(currentTime));
+        durationElement.textContent = formatTimeBySecond(duration);
+        const progress = Math.round((currentTime / duration) * 100);
+        progressFill.style.width = `${progress}px`;
+    }
+
+    // lui lai bai dang sau
+    // btnPrev.onclick = () => {
+    //     const { currentTime } = audio;
+    //     if (currentTime > 2) {
+    //         audio.currentTime = 0;
+    //     } else {
+    //         let currentIndex = PREV;
+    //         // if (this._isShuffle) {
+    //         //   currentIndex = this.getRandomSong();
+    //         // }
+    //         handlePrevOrNext(currentIndex);
+    //     }
+    // }
+
+    // next bai tiep
+    // btnNext.onclick = () => {
+    //   let currentIndex = NEXT;
+    //   if (this._isShuffle) {
+    //     currentIndex = this.getRandomSong();
+    //   }
+    //   this.handlePrevOrNext(currentIndex);
+    // }
+}
 
 function showAllTracksById(artistHeroData, tracksData) {
     const artistHero = document.querySelector("#artistHero");
@@ -458,6 +562,7 @@ function showAllTracksById(artistHeroData, tracksData) {
     if (tracksData?.length) {
         trackList.innerHTML = tracksData.map(track => {
             const {
+                id,
                 position,
                 imageUrl,
                 title,
@@ -465,7 +570,7 @@ function showAllTracksById(artistHeroData, tracksData) {
                 duration,
             } = track;
             return (
-                `<div class="track-item">
+                `<div class="track-item" id="${id}">
               <div class="track-number">${position}</div>
               <div class="track-image">
                 <img src="${imageUrl}?height=40&amp;width=40" alt="${title}">
@@ -487,6 +592,7 @@ function showAllTracksById(artistHeroData, tracksData) {
         trackList.innerHTML = '';
     }
 
+    handleTrackClick();
     return;
 }
 
@@ -587,7 +693,6 @@ function handleShowDetailPlayList() {
 async function renderDetailPlayList(id) {
     const playlistDetail = await getPlaylistByID(id)
     const { tracks } = await getAllTracksByIdPlaylist(id)
-    console.log('tracks', tracks)
 
     if (playlistDetail) {
         const artistHeroData = {
@@ -604,6 +709,16 @@ async function renderDetailPlayList(id) {
             playCount: formatNumberComma(track.track_play_count),
             duration: formatTimeBySecond(track.track_duration)
         }));
+
+        if (playlistDetail && tracks && !!tracks.length) {
+            localStorage.setItem("playlist", JSON.stringify(
+                {
+                    tracks,
+                    playlistDetail
+                }
+            ));
+        }
+        console.log('tracks', tracks)
         showAllTracksById(artistHeroData, tracksData, id);
     }
 }
@@ -655,7 +770,6 @@ async function handleShowDetailArtistLoaded() {
 }
 
 
-
 async function renderDetailArtist(id) {
     const artistDetail = await getArtistByID(id)
     const { tracks } = await getAllTracksByIdArtist(id)
@@ -670,12 +784,22 @@ async function renderDetailArtist(id) {
         }
 
         const tracksData = tracks && tracks.map(track => ({
+            id: track.id,
             position: track.track_number,
             imageUrl: track.image_url,
             title: track.title,
             playCount: formatNumberComma(track.track_play_count),
             duration: formatTimeBySecond(track.duration)
         }));
+
+        if (artistDetail && tracks && !!tracks.length) {
+            localStorage.setItem("artist", JSON.stringify(
+                {
+                    tracks,
+                    artistDetail
+                }
+            ));
+        }
 
         showAllTracksById(artistHeroData, tracksData);
     }
@@ -720,12 +844,14 @@ function initShowDetailArtist() {
 
     const libraryItems = libraryContent.querySelectorAll(".library-item");
 
-    if (!artistCards?.length || !libraryItems?.length) return;
+
+    if (!artistCards?.length && !libraryItems?.length) return;
 
     const artistElements = [
         ...(artistCards || []),
         ...(libraryItems || [])
     ];
+
     artistElements
         .forEach(artist => {
             // Gỡ listener cũ trước (nếu có)
@@ -937,13 +1063,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     initFollowButton();
 
+    initShowDetailArtist();
+
+
+
     // hide unfollow popup
     document.addEventListener("click", handleHideUnFollow);
     document.addEventListener("contextmenu", handleHideUnFollow);
-
-
-
-
 })
 
 // Disabled Contextmenu 

@@ -5,6 +5,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Đen - Spotify</title>
+
+  <!-- Favicon -->
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/favicons/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicons/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicons/favicon-16x16.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+
+
   <!-- Font Awesome CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="stylesheet" href="css/reset.css" />
@@ -42,10 +50,69 @@
           <button class="search-library-btn" data-tooltip="Tìm kiếm trong thư viện">
             <i class="fas fa-search"></i>
           </button>
-          <button class="sort-btn">
-            Recents
-            <i class="fas fa-list"></i>
-          </button>
+          <div class="library-sort-wrapper">
+            <button class="sort-btn" id="library-sort-btn">
+              Recents
+              <i class="fas fa-list"></i>
+            </button>
+
+            <div class="library-filter-sort" id="library-filter-sort">
+              <ul class="filters">
+                <li class="filter-item disabled">
+                  <button>Sắp xếp theo</button>
+                </li>
+                <li class="filter-item">
+                  <button>Gần đây</button>
+                </li>
+                <li class="filter-item">
+                  <button>Mới thêm gần đây</button>
+                </li>
+                <li class="filter-item">
+                  <button>Thứ tự chữ cái</button>
+                </li>
+                <li class="filter-item">
+                  <button>Người sáng tạo</button>
+                </li>
+              </ul>
+
+              <div class="sort-list" id="library-sorts">
+                <p class="sort-list-title">Xem dưới dạng</p>
+                <ul class="sorts">
+                  <li class="sort-item" data-type="library-show-compact-list">
+                    <button>
+                      <svg data-encore-id="icon" role="img" aria-hidden="true" viewBox="0 0 16 16" style="height: 16px; width: 16px;fill:#b3b3b3">
+                        <path d="M15.5 13.5H.5V12h15zm0-4.75H.5v-1.5h15zm0-4.75H.5V2.5h15z"></path>
+                      </svg>
+                    </button>
+                  </li>
+
+                  <li class="sort-item active" data-type="library-show-list-default">
+                    <button>
+                      <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-91000-icon e-91000-baseline e-91000-icon--auto-mirror" viewBox="0 0 16 16" style="height: 16px; width: 16px;fill:#b3b3b3">
+                        <path d="M15 14.5H5V13h10zm0-5.75H5v-1.5h10zM15 3H5V1.5h10zM3 3H1V1.5h2zm0 11.5H1V13h2zm0-5.75H1v-1.5h2z"></path>
+                      </svg>
+                    </button>
+                  </li>
+
+                  <li class="sort-item" data-type="library-show-compact-grid">
+                    <button>
+                      <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-91000-icon e-91000-baseline" viewBox="0 0 16 16" style="height: 16px; width: 16px;fill:#b3b3b3">
+                        <path d="M1 1h3v3H1zm0 5.5h3v3H1zM4 12H1v3h3zM6.5 1h3v3h-3zm3 5.5h-3v3h3zm-3 5.5h3v3h-3zM15 1h-3v3h3zm-3 5.5h3v3h-3zm3 5.5h-3v3h3z"></path>
+                      </svg>
+                    </button>
+                  </li>
+
+                  <li class="sort-item" data-type="library-show-grid-default">
+                    <button>
+                      <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-91000-icon e-91000-baseline" viewBox="0 0 16 16" style="height: 16px; width: 16px;fill:#b3b3b3">
+                        <path d="M1 1h6v6H1zm1.5 1.5v3h3v-3zM1 9h6v6H1zm1.5 1.5v3h3v-3zM9 1h6v6H9zm1.5 1.5v3h3v-3zM9 9h6v6H9zm1.5 1.5v3h3v-3z"></path>
+                      </svg>
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="library-content" id="libraryContent">
@@ -415,7 +482,7 @@
           <button class="control-btn btn-prev" data-tooltip="Trước">
             <i class="fas fa-step-backward"></i>
           </button>
-          <button class="control-btn play-btn" data-tooltip="Phát">
+          <button class="control-btn play-btn" data-tooltip="Phát/Dừng">
             <i class="fas fa-pause" id="play-icon"></i>
           </button>
           <button class="control-btn btn-next" data-tooltip="Tiếp">

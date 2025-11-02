@@ -6,8 +6,6 @@
 + Show grid default
 */
 
-import { TYPE_LIBRARY } from "../utils/constants.js";
-
 class Library {
   // Get DOM element
   constructor() {
@@ -22,16 +20,25 @@ class Library {
   }
 
   getArtistsFollowing() {
-    return JSON.parse(localStorage.getItem("artistsFollowing"));
+    return JSON.parse(localStorage.getItem("libraryArtistsFollowings"));
   }
+
+  getPlaylistsFollowing() {
+    return JSON.parse(localStorage.getItem("libraryPlaylistsFollowing"));
+  }
+
+  getAllFollowing() {
+    return JSON.parse(localStorage.getItem("libraryAllFollowing"));
+  }
+
   renderYourLibrary = async (artists) => {
     const libraryContent = document.querySelector("#libraryContent");
     if (artists?.length) {
       libraryContent.innerHTML = artists
         .map((artist) => {
-          const { id, name, image_url } = artist;
-          return `<div class="library-item" data-id=${id} data-type=${TYPE_LIBRARY.ARTIST}>
-                        <img src="${image_url}" alt="${name}" class="item-image" />
+          const { id, name, image_url, type } = artist;
+          return `<div class="library-item" data-id=${id} data-type=${type}>
+                        <img src="${image_url ?? "https://placehold.co/600x400?text=Image"}" alt="${name}" class="item-image" />
                         <div class="item-info">
                         <div class="item-title">${name}</div>
                         <div class="item-subtitle">Artist</div>
@@ -84,10 +91,10 @@ class Library {
 
     this._librarySearchInput.addEventListener("keyup", (e) => {
       const value = e.target.value;
-      const artistsFollowing = this.getArtistsFollowing();
+      const libraryAllFollowing = this.getAllFollowing();
 
-      const result = artistsFollowing.filter((artist) =>
-        artist.name.toLowerCase().includes(value.toLowerCase())
+      const result = libraryAllFollowing.filter((item) =>
+        item.name.toLowerCase().includes(value.toLowerCase())
       );
       this.renderYourLibrary(result);
     });

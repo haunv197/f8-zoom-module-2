@@ -583,14 +583,14 @@ async function getPlaylists() {
           return `
                     <div class="hit-card" data-id=${id}>
                         <div class="hit-card-cover">
-                            <img src=${image_url} alt=${name} />
+                            <img src=${image_url ?? "https://placehold.co/600x400?text=Image"} alt=${name} />
                             <button class="hit-play-btn">
                             <i class="fas fa-play"></i>
                             </button>
                         </div>
                         <div class="hit-card-info">
                             <h3 class="hit-card-title">${name}</h3>
-                            <p class="hit-card-artist">${user_display_name}</p>
+                            <p class="hit-card-artist">${user_display_name ?? "Unknow"}</p>
                         </div>
                         </div>
                 `;
@@ -958,15 +958,40 @@ async function handleUnFollow(id) {
 async function renderYourLibrary() {
   const libraryContent = document.querySelector("#libraryContent");
   try {
-    const { artists } = await httpRequest.get("me/following?limit=20&offset=0");
-    if (artists?.length) {
-      localStorage.setItem("artistsFollowing", JSON.stringify(artists));
+    const [{ artists }, { playlists }] = await Promise.all([
+      httpRequest.get("me/following?limit=20&offset=0").catch(() => []),
+      httpRequest.get("me/playlists").catch(() => []),
+    ]);
 
-      libraryContent.innerHTML = artists
-        .map((artist) => {
-          const { id, name, image_url } = artist;
-          return `<div class="library-item" data-id=${id} data-type=${TYPE_LIBRARY.ARTIST}>
-                        <img src="${image_url}" alt="${name}" class="item-image" />
+    // remove Like Songs(0)
+    playlists.pop();
+
+    const newPlaylists = playlists.map((item) => ({
+      ...item,
+      type: TYPE_LIBRARY.PLAY_LIST,
+    }));
+    localStorage.setItem(
+      "libraryPlaylistsFollowing",
+      JSON.stringify(newPlaylists)
+    );
+
+    const newArtists = artists.map((item) => ({
+      ...item,
+      type: TYPE_LIBRARY.ARTIST,
+    }));
+
+    localStorage.setItem("libraryArtistsFollowing", JSON.stringify(newArtists));
+
+    const mergeList = [...newPlaylists, ...newArtists];
+
+    if (mergeList?.length) {
+      localStorage.setItem("libraryAllFollowing", JSON.stringify(mergeList));
+
+      libraryContent.innerHTML = mergeList
+        .map((item) => {
+          const { id, name, image_url, type } = item;
+          return `<div class="library-item" data-id=${id} data-type=${type}>
+                        <img src="${image_url ?? "https://placehold.co/600x400?text=Image"}" alt="${name}" class="item-image" />
                         <div class="item-info">
                         <div class="item-title">${name}</div>
                         <div class="item-subtitle">Artist</div>

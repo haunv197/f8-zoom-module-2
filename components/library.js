@@ -17,10 +17,12 @@ class Library {
 
     this._librarySearchInput = document.querySelector("#library-search-input");
     this._searchLibraryBtn = document.querySelector("#search-library-btn");
+
+    this._libraryNavTabs = document.querySelector("#library-nav-tabs");
   }
 
   getArtistsFollowing() {
-    return JSON.parse(localStorage.getItem("libraryArtistsFollowings"));
+    return JSON.parse(localStorage.getItem("libraryArtistsFollowing"));
   }
 
   getPlaylistsFollowing() {
@@ -31,12 +33,12 @@ class Library {
     return JSON.parse(localStorage.getItem("libraryAllFollowing"));
   }
 
-  renderYourLibrary = async (artists) => {
+  renderYourLibrary = async (libraries) => {
     const libraryContent = document.querySelector("#libraryContent");
-    if (artists?.length) {
-      libraryContent.innerHTML = artists
-        .map((artist) => {
-          const { id, name, image_url, type } = artist;
+    if (libraries?.length) {
+      libraryContent.innerHTML = libraries
+        .map((library) => {
+          const { id, name, image_url, type } = library;
           return `<div class="library-item" data-id=${id} data-type=${type}>
                         <img src="${image_url ?? "https://placehold.co/600x400?text=Image"}" alt="${name}" class="item-image" />
                         <div class="item-info">
@@ -116,6 +118,41 @@ class Library {
         this._librarySearchInput.classList.remove("show");
         this._sortBtn.querySelector(".sort-btn-text").classList.remove("hide");
       }
+    });
+
+    // Filter Playlists vs Artist
+    this._libraryNavTabs.addEventListener("click", (e) => {
+      const btnTab = e.target.closest(".nav-tab");
+      if (!btnTab) return;
+
+      this._libraryNavTabs
+        .querySelectorAll(".nav-tab.active")
+        .forEach((item) => {
+          if (!item.contains(btnTab)) {
+            item.classList.remove("active");
+          }
+        });
+
+      btnTab.classList.toggle("active");
+
+      let dataTab = "all";
+      if (btnTab.classList.contains("active")) {
+        dataTab = btnTab.dataset.tab;
+      }
+
+      let result = this.getAllFollowing();
+      switch (dataTab) {
+        case "playlist":
+          result = this.getPlaylistsFollowing();
+          break;
+        case "artist":
+          result = this.getArtistsFollowing();
+          break;
+        default:
+          break;
+      }
+
+      this.renderYourLibrary(result);
     });
   }
 }

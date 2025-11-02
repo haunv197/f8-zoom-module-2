@@ -6,6 +6,8 @@
 + Show grid default
 */
 
+import { TYPE_LIBRARY } from "../utils/constants.js";
+
 class Library {
   // Get DOM element
   constructor() {
@@ -14,22 +16,39 @@ class Library {
 
     this._librarySorts = document.querySelector("#library-sorts");
     this._libraryContent = document.querySelector("#libraryContent");
+
+    this._librarySearchInput = document.querySelector("#library-search-input");
+    this._searchLibraryBtn = document.querySelector("#search-library-btn");
   }
+
+  getArtistsFollowing() {
+    return JSON.parse(localStorage.getItem("artistsFollowing"));
+  }
+  renderYourLibrary = async (artists) => {
+    const libraryContent = document.querySelector("#libraryContent");
+    if (artists?.length) {
+      libraryContent.innerHTML = artists
+        .map((artist) => {
+          const { id, name, image_url } = artist;
+          return `<div class="library-item" data-id=${id} data-type=${TYPE_LIBRARY.ARTIST}>
+                        <img src="${image_url}" alt="${name}" class="item-image" />
+                        <div class="item-info">
+                        <div class="item-title">${name}</div>
+                        <div class="item-subtitle">Artist</div>
+                        </div>
+                    </div>`;
+        })
+        .join("");
+    } else {
+      libraryContent.innerHTML = "";
+    }
+  };
 
   init() {
     // Show Popup (Sort Option)
     this._sortBtn.addEventListener("click", () => {
       if (!this._filterSort) return;
       this._filterSort.classList.toggle("show");
-    });
-
-    document.addEventListener("click", (e) => {
-      if (
-        !this._sortBtn.contains(e.target) &&
-        !this._filterSort.contains(e.target)
-      ) {
-        this._filterSort.classList.remove("show");
-      }
     });
 
     document.addEventListener("keydown", (e) => {
@@ -55,6 +74,41 @@ class Library {
       const libraryContent = this._libraryContent;
       if (!libraryContent) return;
       libraryContent.dataset.value = dataType;
+    });
+
+    // Search
+    this._searchLibraryBtn.addEventListener("click", () => {
+      this._librarySearchInput.classList.add("show");
+      this._sortBtn.querySelector(".sort-btn-text").classList.add("hide");
+    });
+
+    this._librarySearchInput.addEventListener("keyup", (e) => {
+      const value = e.target.value;
+      const artistsFollowing = this.getArtistsFollowing();
+
+      const result = artistsFollowing.filter((artist) =>
+        artist.name.toLowerCase().includes(value.toLowerCase())
+      );
+      this.renderYourLibrary(result);
+    });
+
+    document.addEventListener("click", (e) => {
+      // Hide Filter Sort
+      if (
+        !this._sortBtn.contains(e.target) &&
+        !this._filterSort.contains(e.target)
+      ) {
+        this._filterSort.classList.remove("show");
+      }
+
+      // Hide Search
+      if (
+        !this._librarySearchInput.contains(e.target) &&
+        !this._searchLibraryBtn.contains(e.target)
+      ) {
+        this._librarySearchInput.classList.remove("show");
+        this._sortBtn.querySelector(".sort-btn-text").classList.remove("hide");
+      }
     });
   }
 }

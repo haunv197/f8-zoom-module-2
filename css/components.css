@@ -217,6 +217,10 @@
   color: var(--text-primary);
 }
 
+.sort-btn .sort-btn-text.hide{
+  display: none;
+}
+
 /* Search box */
 .search-box {
   display: flex;

@@ -43,6 +43,7 @@
   --transition-slow: 0.5s ease;
 
   /* Z-index */
+  --z-init: 1;
   --z-sidebar: 10;
   --z-header: 20;
   --z-player: 30;

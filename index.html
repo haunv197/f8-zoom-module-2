@@ -47,12 +47,16 @@
         </div>
 
         <div class="search-library">
-          <button class="search-library-btn" data-tooltip="Tìm kiếm trong thư viện">
-            <i class="fas fa-search"></i>
-          </button>
+          <div class="search-library-btn-wrapper">
+            <button class="search-library-btn" id="search-library-btn" data-tooltip="Tìm kiếm trong thư viện">
+              <i class="fas fa-search"></i>
+            </button>
+            <input type="text" placeholder="Tìm kiếm trong thư viện" id="library-search-input" class="library-search-input">
+          </div>
+
           <div class="library-sort-wrapper">
             <button class="sort-btn" id="library-sort-btn">
-              Recents
+              <span class="sort-btn-text">Recents</span>
               <i class="fas fa-list"></i>
             </button>
 

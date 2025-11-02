@@ -1,15 +1,6 @@
 import httpRequest from "./utils/httpRequest.js";
 import Library from "./components/library.js";
-
-const STATUS = {
-  SUCCESS: "success",
-  WARNING: "warning",
-};
-
-const TYPE_LIBRARY = {
-  ARTIST: "artist",
-  PLAY_LIST: "playlist",
-};
+import { STATUS, TYPE_LIBRARY } from "./utils/constants.js";
 
 // handleXSS
 function escapeHTML(str) {
@@ -969,6 +960,8 @@ async function renderYourLibrary() {
   try {
     const { artists } = await httpRequest.get("me/following?limit=20&offset=0");
     if (artists?.length) {
+      localStorage.setItem("artistsFollowing", JSON.stringify(artists));
+
       libraryContent.innerHTML = artists
         .map((artist) => {
           const { id, name, image_url } = artist;

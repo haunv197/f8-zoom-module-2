@@ -105,6 +105,29 @@
 
 
 /* Filter sort (sidebar) */
+
+.search-library-btn-wrapper{
+  position: relative;
+}
+
+.library-search-input{
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 32px;
+  width: 0;
+  /* padding-left: 37px; */
+  background-color:  hsla(0, 0%, 100%, .1);
+  color: var(--text-secondary);
+  transition: 0.3s;
+}
+
+.library-search-input.show{
+  width: 185px;
+  padding-left: 37px;
+}
+
+
 .library-sort-wrapper{
   position: relative;
 }

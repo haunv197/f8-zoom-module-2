@@ -503,7 +503,7 @@ function handleChangeTrack(artist, idTrack) {
   // }
 }
 
-function showAllTracksById(artistHeroData, tracksData) {
+function showAllTracksById(artistHeroData, tracksData, type) {
   const artistHero = document.querySelector("#artistHero");
   const artistControls = document.querySelector("#artistControls");
   const artistPopular = document.querySelector("#artistPopular");
@@ -516,7 +516,15 @@ function showAllTracksById(artistHeroData, tracksData) {
   if (artistHeroData) {
     const { name, imageUrl, monthlyListeners, is_following } = artistHeroData;
 
-    btnFollow.textContent = is_following ? "Unfollow" : "Follow";
+    if (type === TYPE_LIBRARY.ARTIST) {
+      btnFollow.textContent = is_following ? "Unfollow" : "Follow";
+    } else {
+      btnFollow.textContent = is_following
+        ? "Remove from your library"
+        : "Add to your library";
+    }
+    console.log("tracksData", tracksData);
+    console.log("artistHeroData", artistHeroData);
     btnFollow.setAttribute("data-va", is_following);
 
     artistHero.innerHTML = ` 
@@ -689,7 +697,7 @@ async function renderDetailPlayList(id) {
       );
     }
     console.log("tracks", tracks);
-    showAllTracksById(artistHeroData, tracksData, id);
+    showAllTracksById(artistHeroData, tracksData, TYPE_LIBRARY.PLAY_LIST);
   }
 }
 //---------------------------------- End All logic PlayList  --------------------------------------------------
@@ -771,7 +779,7 @@ async function renderDetailArtist(id) {
       );
     }
 
-    showAllTracksById(artistHeroData, tracksData);
+    showAllTracksById(artistHeroData, tracksData, TYPE_LIBRARY.ARTIST);
   }
 }
 

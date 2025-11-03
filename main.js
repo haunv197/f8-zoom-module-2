@@ -336,6 +336,7 @@ async function loginAndRegisterSuccess(user, message) {
   const mainHeader = document.querySelector(".main-header");
   const userMenu = mainHeader.querySelector(".user-menu");
   const userAvatarImg = mainHeader.querySelector(".user-avatar img");
+  const userName = mainHeader.querySelector("#userName");
 
   // remove author (login, register)
   const authorButtons = mainHeader.querySelector(".auth-buttons");
@@ -346,6 +347,7 @@ async function loginAndRegisterSuccess(user, message) {
   if (user.avatar_url) {
     userAvatarImg.src = user.avatar_url;
   }
+  userName.textContent = user.display_name;
 
   // Show Toast
   if (message) {

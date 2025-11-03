@@ -1,7 +1,13 @@
 import httpRequest from "./utils/httpRequest.js";
 import Library from "./components/library.js";
-import { PLAY_LIST, STATUS, TYPE_LIBRARY } from "./utils/constants.js";
+import {
+  PLACEHOLDER_IMAGE,
+  PLAY_LIST,
+  STATUS,
+  TYPE_LIBRARY,
+} from "./utils/constants.js";
 import PlayListDetail from "./components/playlistDetail.js";
+import Playlist from "./components/playlist.js";
 
 // handleXSS
 function escapeHTML(str) {
@@ -510,10 +516,10 @@ function showAllTracksById(artistHeroData, tracksData, type, id) {
   const artistPopular = document.querySelector("#artistPopular");
   const trackList = artistPopular.querySelector(".track-list");
   const btnFollow = artistControls.querySelector(".btnFollow");
+  const btnDeletePlayList = artistControls.querySelector(".btnDeletePlayList");
 
   hideHitsAndArtists();
   showDetailPlaylistsAndArtist();
-
   if (artistHeroData) {
     const { name, imageUrl, monthlyListeners, is_following } = artistHeroData;
 
@@ -522,12 +528,28 @@ function showAllTracksById(artistHeroData, tracksData, type, id) {
     } else {
       btnFollow.id = "btn-playlist-follow";
       btnFollow.dataset.id = id;
+      btnDeletePlayList.dataset.id = id;
 
       btnFollow.textContent = is_following
         ? PLAY_LIST.REMOVE_FROM_YOUR_LIBRARY
         : PLAY_LIST.ADD_FROM_YOUR_LIBRARY;
     }
-    console.log("tracksData", tracksData);
+    const libraryAllFollowing = JSON.parse(
+      localStorage.getItem("libraryAllFollowing")
+    );
+
+    const isAllowRemove = libraryAllFollowing.find(
+      (item) => item.id === id
+    )?.isAllowRemove;
+
+    if (isAllowRemove) {
+      btnDeletePlayList.classList.remove("hide");
+      btnFollow.classList.add("hide");
+    } else {
+      btnDeletePlayList.classList.add("hide");
+      btnFollow.classList.remove("hide");
+    }
+
     btnFollow.setAttribute("data-va", is_following);
 
     artistHero.innerHTML = ` 
@@ -598,7 +620,7 @@ async function getPlaylists() {
           return `
                     <div class="hit-card" data-id=${id}>
                         <div class="hit-card-cover">
-                            <img src=${image_url ?? "https://placehold.co/600x400?text=Image"} alt=${name} />
+                            <img src=${image_url ?? PLACEHOLDER_IMAGE} alt=${name} />
                             <button class="hit-play-btn">
                             <i class="fas fa-play"></i>
                             </button>
@@ -975,18 +997,24 @@ async function handleUnFollow(id) {
 export async function renderYourLibrary() {
   const libraryContent = document.querySelector("#libraryContent");
   try {
-    const [{ artists }, { playlists }] = await Promise.all([
-      httpRequest.get("me/following?limit=20&offset=0").catch(() => []),
-      httpRequest.get("me/playlists/followed").catch(() => []),
-    ]);
+    const [{ artists }, { playlists: playlistsFollowed }, { playlists }] =
+      await Promise.all([
+        httpRequest.get("me/following?limit=20&offset=0").catch(() => []),
+        httpRequest.get("me/playlists/followed").catch(() => []),
+        httpRequest.get("me/playlists").catch(() => []),
+      ]);
 
     // remove Like Songs(0)
-    playlists.pop();
-
-    const newPlaylists = playlists.map((item) => ({
+    // playlists.pop();
+    const user = JSON.parse(localStorage.getItem("userCurrent"));
+    const reversePlaylist = playlists.reverse();
+    const mergePlaylist = [...reversePlaylist, ...playlistsFollowed];
+    const newPlaylists = mergePlaylist.map((item) => ({
       ...item,
       type: TYPE_LIBRARY.PLAY_LIST,
+      isAllowRemove: item.user_id === user.id,
     }));
+
     localStorage.setItem(
       "libraryPlaylistsFollowing",
       JSON.stringify(newPlaylists)
@@ -1007,11 +1035,12 @@ export async function renderYourLibrary() {
       libraryContent.innerHTML = mergeList
         .map((item) => {
           const { id, name, image_url, type } = item;
+          const subtitle = type === TYPE_LIBRARY.ARTIST ? "Artist" : "Playlist";
           return `<div class="library-item" data-id=${id} data-type=${type}>
-                        <img src="${image_url ?? "https://placehold.co/600x400?text=Image"}" alt="${name}" class="item-image" />
+                        <img src="${image_url ?? PLACEHOLDER_IMAGE}" alt="${name}" class="item-image" />
                         <div class="item-info">
                         <div class="item-title">${name}</div>
-                        <div class="item-subtitle">Artist</div>
+                        <div class="item-subtitle">${subtitle}</div>
                         </div>
                     </div>`;
         })
@@ -1078,6 +1107,10 @@ document.addEventListener("DOMContentLoaded", function () {
   // Library
   const library = new Library();
   library.init();
+
+  // PlayList
+  const playlist = new Playlist();
+  playlist.init();
 });
 
 // Disabled Contextmenu
@@ -1112,4 +1145,4 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 });
 
-export { renderDetailPlayList, renderDetailArtist };
+export { renderDetailPlayList, renderDetailArtist, renderHomePage };

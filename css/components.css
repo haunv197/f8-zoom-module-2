@@ -217,7 +217,7 @@
   color: var(--text-primary);
 }
 
-.sort-btn .sort-btn-text.hide{
+.sort-btn .sort-btn-text.hide {
   display: none;
 }
 
@@ -459,6 +459,9 @@
   font-weight: bold;
 }
 
+.cta-text.hide {
+  display: none;
+}
 /* Track List */
 .popular-section {
   margin-bottom: var(--spacing-2xl);
@@ -1229,17 +1232,16 @@
   color: var(--success-primary);
 }
 
-
-.tooltip{
+.tooltip {
   position: fixed;
-  background-color:#2a2a2a;
-  color:#fff;
+  background-color: #2a2a2a;
+  color: #fff;
   z-index: var(--z-tooltip);
   padding: 0.25rem 0.35rem;
   transform: translateX(-50%);
   border-radius: 4px;
-  font-size:14px;
+  font-size: 14px;
 }
-.tooltip.hide{
+.tooltip.hide {
   display: none;
 }

@@ -1,10 +1,11 @@
-import { renderYourLibrary } from "../main.js";
+import { renderHomePage, renderYourLibrary } from "../main.js";
 import { PLAY_LIST } from "../utils/constants.js";
 import httpRequest from "../utils/httpRequest.js";
 
 class PlayListDetail {
   constructor() {
     this._btnPlaylistFollow = document.querySelector("#btn-playlist-follow");
+    this._btnDeletePlayList = document.querySelector("#btnDeletePlayList");
   }
 
   handleFollowAndUnfollowPlaylist() {
@@ -42,8 +43,23 @@ class PlayListDetail {
     };
   }
 
+  handleDeletePlaylist() {
+    this._btnDeletePlayList.addEventListener("click", async () => {
+      const id = this._btnDeletePlayList.dataset.id;
+      try {
+        await httpRequest.del(`playlists/${id}`);
+        renderYourLibrary();
+        renderHomePage();
+      } catch (err) {
+        console.error("Delete PlayList Error", err);
+      }
+    });
+  }
+
   init() {
     this.handleFollowAndUnfollowPlaylist();
+
+    this.handleDeletePlaylist();
   }
 }
 

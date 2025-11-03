@@ -118,11 +118,9 @@ class Library {
       const value = e.target.value;
       const libraryAllFollowing = this.getAllFollowing();
 
-      console.log("libraryAllFollowing", libraryAllFollowing);
       const result = libraryAllFollowing.filter((item) =>
         item.name.toLowerCase().includes(value.toLowerCase())
       );
-      console.log("result", result);
       this.renderYourLibrary(result);
     });
 

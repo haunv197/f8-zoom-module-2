@@ -8,4 +8,9 @@ const TYPE_LIBRARY = {
   PLAY_LIST: "playlist",
 };
 
-export { STATUS, TYPE_LIBRARY };
+const PLAY_LIST = {
+  REMOVE_FROM_YOUR_LIBRARY: "Remove from your library",
+  ADD_FROM_YOUR_LIBRARY: "Add from your library",
+};
+
+export { STATUS, TYPE_LIBRARY, PLAY_LIST };

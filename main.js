@@ -1,6 +1,7 @@
 import httpRequest from "./utils/httpRequest.js";
 import Library from "./components/library.js";
-import { STATUS, TYPE_LIBRARY } from "./utils/constants.js";
+import { PLAY_LIST, STATUS, TYPE_LIBRARY } from "./utils/constants.js";
+import PlayListDetail from "./components/playlistDetail.js";
 
 // handleXSS
 function escapeHTML(str) {
@@ -503,7 +504,7 @@ function handleChangeTrack(artist, idTrack) {
   // }
 }
 
-function showAllTracksById(artistHeroData, tracksData, type) {
+function showAllTracksById(artistHeroData, tracksData, type, id) {
   const artistHero = document.querySelector("#artistHero");
   const artistControls = document.querySelector("#artistControls");
   const artistPopular = document.querySelector("#artistPopular");
@@ -519,12 +520,14 @@ function showAllTracksById(artistHeroData, tracksData, type) {
     if (type === TYPE_LIBRARY.ARTIST) {
       btnFollow.textContent = is_following ? "Unfollow" : "Follow";
     } else {
+      btnFollow.id = "btn-playlist-follow";
+      btnFollow.dataset.id = id;
+
       btnFollow.textContent = is_following
-        ? "Remove from your library"
-        : "Add to your library";
+        ? PLAY_LIST.REMOVE_FROM_YOUR_LIBRARY
+        : PLAY_LIST.ADD_FROM_YOUR_LIBRARY;
     }
     console.log("tracksData", tracksData);
-    console.log("artistHeroData", artistHeroData);
     btnFollow.setAttribute("data-va", is_following);
 
     artistHero.innerHTML = ` 
@@ -571,6 +574,10 @@ function showAllTracksById(artistHeroData, tracksData, type) {
   }
 
   handleTrackClick();
+
+  // Playlist detail
+  const playListDetail = new PlayListDetail();
+  playListDetail.init();
   return;
 }
 
@@ -696,8 +703,7 @@ async function renderDetailPlayList(id) {
         })
       );
     }
-    console.log("tracks", tracks);
-    showAllTracksById(artistHeroData, tracksData, TYPE_LIBRARY.PLAY_LIST);
+    showAllTracksById(artistHeroData, tracksData, TYPE_LIBRARY.PLAY_LIST, id);
   }
 }
 //---------------------------------- End All logic PlayList  --------------------------------------------------
@@ -732,7 +738,7 @@ async function getArtists() {
       initShowDetailArtist();
     }
   } catch (err) {
-    console.log("Error - Get Data Popular artists", err);
+    console.error("Error - Get Data Popular artists", err);
   }
 }
 
@@ -779,7 +785,7 @@ async function renderDetailArtist(id) {
       );
     }
 
-    showAllTracksById(artistHeroData, tracksData, TYPE_LIBRARY.ARTIST);
+    showAllTracksById(artistHeroData, tracksData, TYPE_LIBRARY.ARTIST, id);
   }
 }
 
@@ -838,6 +844,9 @@ function initShowDetailArtist() {
 async function handleArtistDetailClick(e) {
   const target = e.target;
   let self = null;
+  const dataType = target.closest(".library-item").dataset.type;
+  if (dataType !== TYPE_LIBRARY.ARTIST) return;
+
   if (target.closest(".library-item")) {
     self = target.closest(".library-item");
   }
@@ -963,12 +972,12 @@ async function handleUnFollow(id) {
 
 //---------------------------------- Start All logic Sidebar  --------------------------------------------------
 
-async function renderYourLibrary() {
+export async function renderYourLibrary() {
   const libraryContent = document.querySelector("#libraryContent");
   try {
     const [{ artists }, { playlists }] = await Promise.all([
       httpRequest.get("me/following?limit=20&offset=0").catch(() => []),
-      httpRequest.get("me/playlists").catch(() => []),
+      httpRequest.get("me/playlists/followed").catch(() => []),
     ]);
 
     // remove Like Songs(0)
@@ -1098,7 +1107,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     loginSuccess(user);
     await renderYourLibrary();
   } catch (err) {
-    console.log("err", err);
+    console.error("err", err);
     authorButtons.classList.add("show");
   }
 });
+
+export { renderDetailPlayList, renderDetailArtist };

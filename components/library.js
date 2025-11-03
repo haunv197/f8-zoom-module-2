@@ -6,6 +6,9 @@
 + Show grid default
 */
 
+import { renderDetailArtist, renderDetailPlayList } from "../main.js";
+import { TYPE_LIBRARY } from "../utils/constants.js";
+
 class Library {
   // Get DOM element
   constructor() {
@@ -34,9 +37,8 @@ class Library {
   }
 
   renderYourLibrary = async (libraries) => {
-    const libraryContent = document.querySelector("#libraryContent");
-    if (libraries?.length) {
-      libraryContent.innerHTML = libraries
+    if (this._libraryContent?.length) {
+      this._libraryContent.innerHTML = libraries
         .map((library) => {
           const { id, name, image_url, type } = library;
           return `<div class="library-item" data-id=${id} data-type=${type}>
@@ -49,9 +51,30 @@ class Library {
         })
         .join("");
     } else {
-      libraryContent.innerHTML = "";
+      this._libraryContent.innerHTML = "";
     }
   };
+
+  showPlayListDetail() {
+    this._libraryContent.addEventListener("click", async (e) => {
+      const libraryItem = e.target.closest(".library-item");
+      if (!libraryItem) return;
+      const type = libraryItem.dataset.type;
+
+      const id = libraryItem.getAttribute("data-id");
+      if (type === TYPE_LIBRARY.PLAY_LIST) {
+        const newUrl = `${location.pathname}?idPlayList=${id}`;
+        history.replaceState({}, "", newUrl);
+        await renderDetailPlayList(id);
+      } else if (type === TYPE_LIBRARY.ARTIST) {
+        const newUrl = `${location.pathname}?idArtist=${id}`;
+        history.replaceState({}, "", newUrl);
+        if (id) {
+          await renderDetailArtist(id);
+        }
+      }
+    });
+  }
 
   init() {
     // Show Popup (Sort Option)
@@ -154,6 +177,9 @@ class Library {
 
       this.renderYourLibrary(result);
     });
+
+    // Show PlayList Detail
+    this.showPlayListDetail();
   }
 }
 

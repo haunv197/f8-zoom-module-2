@@ -37,7 +37,7 @@ class Library {
   }
 
   renderYourLibrary = async (libraries) => {
-    if (this._libraryContent?.length) {
+    if (libraries?.length) {
       this._libraryContent.innerHTML = libraries
         .map((library) => {
           const { id, name, image_url, type } = library;
@@ -118,9 +118,11 @@ class Library {
       const value = e.target.value;
       const libraryAllFollowing = this.getAllFollowing();
 
+      console.log("libraryAllFollowing", libraryAllFollowing);
       const result = libraryAllFollowing.filter((item) =>
         item.name.toLowerCase().includes(value.toLowerCase())
       );
+      console.log("result", result);
       this.renderYourLibrary(result);
     });
 
